@@ -42,17 +42,12 @@ export async function deleteCategory(householdId: string, categoryId: string) {
   await deleteDoc(doc(db, "households", householdId, "categories", categoryId));
 }
 
-export async function swapCategoryOrder(
-  householdId: string,
-  a: Category,
-  b: Category,
-) {
+export async function reorderCategories(householdId: string, orderedItems: Category[]) {
   const batch = writeBatch(db);
-  batch.update(doc(db, "households", householdId, "categories", a.id), {
-    sortOrder: b.sortOrder,
-  });
-  batch.update(doc(db, "households", householdId, "categories", b.id), {
-    sortOrder: a.sortOrder,
+  orderedItems.forEach((item, index) => {
+    batch.update(doc(db, "households", householdId, "categories", item.id), {
+      sortOrder: index,
+    });
   });
   await batch.commit();
 }

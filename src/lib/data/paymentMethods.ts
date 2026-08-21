@@ -41,17 +41,12 @@ export async function deletePaymentMethod(householdId: string, paymentMethodId: 
   await deleteDoc(doc(db, "households", householdId, "paymentMethods", paymentMethodId));
 }
 
-export async function swapPaymentMethodOrder(
-  householdId: string,
-  a: PaymentMethod,
-  b: PaymentMethod,
-) {
+export async function reorderPaymentMethods(householdId: string, orderedItems: PaymentMethod[]) {
   const batch = writeBatch(db);
-  batch.update(doc(db, "households", householdId, "paymentMethods", a.id), {
-    sortOrder: b.sortOrder,
-  });
-  batch.update(doc(db, "households", householdId, "paymentMethods", b.id), {
-    sortOrder: a.sortOrder,
+  orderedItems.forEach((item, index) => {
+    batch.update(doc(db, "households", householdId, "paymentMethods", item.id), {
+      sortOrder: index,
+    });
   });
   await batch.commit();
 }
