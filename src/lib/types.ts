@@ -31,4 +31,17 @@ export type Transaction = {
   memo: string;
   occurredOn: string;
   createdAt: number;
+  recurringId?: string | null;
+};
+
+export type RecurringTransaction = {
+  id: string;
+  name: string;
+  type: TransactionType;
+  amount: number;
+  categoryId: string | null;
+  memo: string;
+  dayOfMonth: number;
+  active: boolean;
+  createdAt: number;
 };

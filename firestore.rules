@@ -39,6 +39,10 @@ service cloud.firestore {
         allow read, write: if isMember(householdId);
       }
 
+      match /recurringTransactions/{recurringId} {
+        allow read, write: if isMember(householdId);
+      }
+
       match /transactions/{transactionId} {
         allow read, update, delete: if isMember(householdId);
         allow create: if isMember(householdId) && request.resource.data.uid == request.auth.uid;

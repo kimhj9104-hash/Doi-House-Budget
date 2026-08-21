@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Home, Users, Wallet2 } from "lucide-react";
+import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { createHousehold, joinHouseholdByCode } from "@/lib/data/household";
 
@@ -32,8 +33,11 @@ export default function OnboardingPage() {
     setError("");
     setLoading(true);
     try {
-      await createHousehold(user.uid, user.displayName || user.email || "", name.trim());
-      router.push("/dashboard");
+      const displayName = auth.currentUser?.displayName || user.email || "";
+      await createHousehold(user.uid, displayName, name.trim());
+      // 여기서 직접 이동하지 않고, householdId가 실시간 구독으로 반영되면
+      // 위 useEffect가 자동으로 /dashboard로 보내준다 (미리 이동하면 아직
+      // householdId가 갱신되기 전이라 다시 /onboarding으로 튕기는 문제가 있었음)
     } catch (err) {
       setError(err instanceof Error ? err.message : "가구를 만들지 못했어요");
       setLoading(false);
@@ -46,8 +50,9 @@ export default function OnboardingPage() {
     setError("");
     setLoading(true);
     try {
-      await joinHouseholdByCode(user.uid, user.displayName || user.email || "", code.trim());
-      router.push("/dashboard");
+      const displayName = auth.currentUser?.displayName || user.email || "";
+      await joinHouseholdByCode(user.uid, displayName, code.trim());
+      // createHousehold와 동일하게, 위 useEffect가 householdId 반영 후 이동시킨다
     } catch (err) {
       setError(err instanceof Error ? err.message : "가구에 참여하지 못했어요");
       setLoading(false);

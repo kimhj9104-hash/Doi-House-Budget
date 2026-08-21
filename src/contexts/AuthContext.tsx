@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
@@ -16,7 +17,13 @@ import {
   query,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import type { Category, Household, HouseholdMember } from "@/lib/types";
+import { applyDueRecurringTransactions } from "@/lib/data/applyRecurring";
+import type {
+  Category,
+  Household,
+  HouseholdMember,
+  RecurringTransaction,
+} from "@/lib/types";
 
 type AuthContextValue = {
   ready: boolean;
@@ -26,6 +33,7 @@ type AuthContextValue = {
   household: Household | null;
   members: HouseholdMember[];
   categories: Category[];
+  recurringTransactions: RecurringTransaction[];
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -36,6 +44,7 @@ const AuthContext = createContext<AuthContextValue>({
   household: null,
   members: [],
   categories: [],
+  recurringTransactions: [],
 });
 
 function describeFirestoreError(err: unknown): string {
@@ -55,8 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [householdDataResolved, setHouseholdDataResolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const appliedRecurringForHousehold = useRef<string | null>(null);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
@@ -92,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setHousehold(null);
       setMembers([]);
       setCategories([]);
+      setRecurringTransactions([]);
       setHouseholdDataResolved(true);
       return;
     }
@@ -100,8 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let gotHousehold = false;
     let gotMembers = false;
     let gotCategories = false;
+    let gotRecurring = false;
     const checkDone = () => {
-      if (gotHousehold && gotMembers && gotCategories) setHouseholdDataResolved(true);
+      if (gotHousehold && gotMembers && gotCategories && gotRecurring) {
+        setHouseholdDataResolved(true);
+      }
     };
 
     const onError = (err: unknown) => {
@@ -109,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       gotHousehold = true;
       gotMembers = true;
       gotCategories = true;
+      gotRecurring = true;
       checkDone();
     };
 
@@ -151,18 +167,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       onError,
     );
 
+    const unsubRecurring = onSnapshot(
+      collection(db, "households", householdId, "recurringTransactions"),
+      (snap) => {
+        setRecurringTransactions(
+          snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<RecurringTransaction, "id">) })),
+        );
+        gotRecurring = true;
+        checkDone();
+      },
+      onError,
+    );
+
     return () => {
       unsubHousehold();
       unsubMembers();
       unsubCategories();
+      unsubRecurring();
     };
   }, [householdId]);
+
+  useEffect(() => {
+    if (!householdId || !user || recurringTransactions.length === 0) return;
+    // recurringIds가 이전 실행과 같으면 건너뛴다 (매 스냅샷마다 다시 돌 필요는 없지만,
+    // 새 고정 항목이 추가되거나 활성화 상태가 바뀌면 다시 확인해야 한다)
+    const key = recurringTransactions
+      .map((r) => `${r.id}:${r.active}`)
+      .sort()
+      .join(",");
+    if (appliedRecurringForHousehold.current === `${householdId}:${key}`) return;
+    appliedRecurringForHousehold.current = `${householdId}:${key}`;
+    applyDueRecurringTransactions(householdId, user.uid, recurringTransactions).catch(() => {
+      appliedRecurringForHousehold.current = null;
+    });
+  }, [householdId, user, recurringTransactions]);
 
   const ready = authResolved && membershipResolved && householdDataResolved;
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ready, error, user, householdId, household, members, categories }),
-    [ready, error, user, householdId, household, members, categories],
+    () => ({
+      ready,
+      error,
+      user,
+      householdId,
+      household,
+      members,
+      categories,
+      recurringTransactions,
+    }),
+    [ready, error, user, householdId, household, members, categories, recurringTransactions],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

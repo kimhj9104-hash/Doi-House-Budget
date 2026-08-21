@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Users } from "lucide-react";
+import { ChevronRight, LogOut, Repeat, Users } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +62,20 @@ export default function SettingsPage() {
         </p>
         <InviteCodeCard code={household.inviteCode} />
       </div>
+
+      <Link
+        href="/recurring"
+        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
+      >
+        <Repeat size={17} className="text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">고정 수입/지출 관리</p>
+          <p className="text-xs text-muted-foreground">
+            매달 반복되는 월급, 월세, 구독료를 등록해두면 자동으로 추가돼요
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-subtle-foreground" />
+      </Link>
 
       <div className={`${cardClass} mb-4 p-5`}>
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-foreground">

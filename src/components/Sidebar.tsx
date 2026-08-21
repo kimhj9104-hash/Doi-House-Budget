@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wallet2, Plus } from "lucide-react";
+import { Wallet2, Plus, Repeat } from "lucide-react";
 import { NAV_ITEMS } from "./nav-items";
 
 export default function Sidebar({ householdName }: { householdName: string }) {
@@ -50,6 +50,18 @@ export default function Sidebar({ householdName }: { householdName: string }) {
             </Link>
           );
         })}
+
+        <Link
+          href="/recurring"
+          className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+            pathname === "/recurring" || pathname.startsWith("/recurring/")
+              ? "bg-sidebar-bg-active text-sidebar-fg-active"
+              : "text-sidebar-fg hover:bg-sidebar-bg-active/60 hover:text-sidebar-fg-active"
+          }`}
+        >
+          <Repeat size={17} strokeWidth={2} />
+          고정 수입/지출
+        </Link>
       </nav>
 
       <div className="border-t border-sidebar-border px-5 py-4">
