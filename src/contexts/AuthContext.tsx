@@ -22,6 +22,7 @@ import type {
   Category,
   Household,
   HouseholdMember,
+  PaymentMethod,
   RecurringTransaction,
 } from "@/lib/types";
 
@@ -34,6 +35,7 @@ type AuthContextValue = {
   members: HouseholdMember[];
   categories: Category[];
   recurringTransactions: RecurringTransaction[];
+  paymentMethods: PaymentMethod[];
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -45,6 +47,7 @@ const AuthContext = createContext<AuthContextValue>({
   members: [],
   categories: [],
   recurringTransactions: [],
+  paymentMethods: [],
 });
 
 function describeFirestoreError(err: unknown): string {
@@ -65,9 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [householdDataResolved, setHouseholdDataResolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const appliedRecurringForHousehold = useRef<string | null>(null);
+  const lastHouseholdIdForRetry = useRef<string | null>(null);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
@@ -98,33 +104,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    if (householdId !== lastHouseholdIdForRetry.current) {
+      lastHouseholdIdForRetry.current = householdId;
+      setRetryKey(0);
+    }
+  }, [householdId]);
+
+  useEffect(() => {
     if (!householdId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear previous household's data when leaving/switching households
       setHousehold(null);
       setMembers([]);
       setCategories([]);
       setRecurringTransactions([]);
+      setPaymentMethods([]);
       setHouseholdDataResolved(true);
       return;
     }
 
     setHouseholdDataResolved(false);
+    setError(null);
     let gotHousehold = false;
     let gotMembers = false;
     let gotCategories = false;
     let gotRecurring = false;
+    let gotPaymentMethods = false;
     const checkDone = () => {
-      if (gotHousehold && gotMembers && gotCategories && gotRecurring) {
+      if (gotHousehold && gotMembers && gotCategories && gotRecurring && gotPaymentMethods) {
         setHouseholdDataResolved(true);
       }
     };
 
+    const MAX_RETRIES = 4;
+    const isPermissionDenied = (err: unknown) =>
+      err instanceof Error && "code" in err && (err as { code: string }).code === "permission-denied";
+
     const onError = (err: unknown) => {
+      // 가구를 막 만든 직후에는 방금 쓴 members 문서가 보안 규칙(exists() 검사)에
+      // 아주 잠깐 반영되지 않아 일시적으로 permission-denied가 날 수 있다.
+      // 이 경우 에러로 바로 보여주지 않고 잠깐 기다렸다가 다시 구독한다.
+      if (isPermissionDenied(err) && retryKey < MAX_RETRIES) {
+        setTimeout(() => setRetryKey((k) => k + 1), 1000 * (retryKey + 1));
+        return;
+      }
       setError(describeFirestoreError(err));
       gotHousehold = true;
       gotMembers = true;
       gotCategories = true;
       gotRecurring = true;
+      gotPaymentMethods = true;
       checkDone();
     };
 
@@ -179,13 +207,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       onError,
     );
 
+    const unsubPaymentMethods = onSnapshot(
+      query(
+        collection(db, "households", householdId, "paymentMethods"),
+        orderBy("sortOrder", "asc"),
+      ),
+      (snap) => {
+        setPaymentMethods(
+          snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PaymentMethod, "id">) })),
+        );
+        gotPaymentMethods = true;
+        checkDone();
+      },
+      onError,
+    );
+
     return () => {
       unsubHousehold();
       unsubMembers();
       unsubCategories();
       unsubRecurring();
+      unsubPaymentMethods();
     };
-  }, [householdId]);
+  }, [householdId, retryKey]);
 
   useEffect(() => {
     if (!householdId || !user || recurringTransactions.length === 0) return;
@@ -214,8 +258,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       members,
       categories,
       recurringTransactions,
+      paymentMethods,
     }),
-    [ready, error, user, householdId, household, members, categories, recurringTransactions],
+    [
+      ready,
+      error,
+      user,
+      householdId,
+      household,
+      members,
+      categories,
+      recurringTransactions,
+      paymentMethods,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -52,6 +52,10 @@ export default function LoginPage() {
       } else {
         const credential = await createUserWithEmailAndPassword(auth, email, password);
         if (name.trim()) {
+          // Firebase Auth 프로필 갱신은 즉시 저장되지만, 곧바로 이어지는 페이지에서
+          // auth.currentUser.displayName을 다시 읽으면 아직 반영되지 않을 때가 있어
+          // sessionStorage에도 남겨서 온보딩 화면이 확실하게 이 이름을 쓰도록 한다
+          sessionStorage.setItem("pendingDisplayName", name.trim());
           await updateProfile(credential.user, { displayName: name.trim() });
         }
       }
@@ -70,7 +74,7 @@ export default function LoginPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <Wallet2 size={28} strokeWidth={2.25} />
           </div>
-          <h1 className="text-xl font-bold text-foreground">두이네 가계부</h1>
+          <h1 className="text-xl font-bold text-foreground">도이네 가게부</h1>
           <p className="text-sm text-muted-foreground">
             부부가 함께 쓰는 우리집 가계부
           </p>

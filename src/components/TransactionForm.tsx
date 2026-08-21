@@ -4,25 +4,29 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import CategoryIcon from "./CategoryIcon";
-import type { Category, TransactionType } from "@/lib/types";
+import type { Category, PaymentMethod, TransactionType } from "@/lib/types";
 import type { TransactionInput } from "@/lib/data/transactions";
 
 type Props = {
   categories: Category[];
+  paymentMethods: PaymentMethod[];
   onSubmit: (input: TransactionInput) => Promise<void>;
   onDelete?: () => Promise<void>;
   initial?: {
     type: TransactionType;
     amount: number;
     categoryId: string | null;
+    paymentMethodId: string | null;
     occurredOn: string;
     memo: string;
+    note: string;
   };
   title: string;
 };
 
 export default function TransactionForm({
   categories,
+  paymentMethods,
   onSubmit,
   onDelete,
   initial,
@@ -31,11 +35,13 @@ export default function TransactionForm({
   const router = useRouter();
   const [type, setType] = useState<TransactionType>(initial?.type ?? "expense");
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
+  const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
   const [amountDisplay, setAmountDisplay] = useState(
     initial?.amount ? String(initial.amount) : "",
   );
   const [occurredOn, setOccurredOn] = useState(initial?.occurredOn ?? "");
   const [memo, setMemo] = useState(initial?.memo ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -67,8 +73,10 @@ export default function TransactionForm({
         type,
         amount,
         categoryId: categoryId || null,
+        paymentMethodId: paymentMethodId || null,
         occurredOn,
         memo: memo.trim(),
+        note: note.trim(),
       });
       router.push("/transactions");
     } catch (err) {
@@ -184,6 +192,31 @@ export default function TransactionForm({
           </div>
         </div>
 
+        {paymentMethods.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">
+              결제수단 (선택)
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {paymentMethods.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setPaymentMethodId(paymentMethodId === m.id ? "" : m.id)}
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    paymentMethodId === m.id
+                      ? "border-primary bg-primary-soft text-primary"
+                      : "border-border bg-white text-foreground"
+                  }`}
+                >
+                  <CategoryIcon icon={m.icon} color={m.color} size={12} />
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-muted-foreground">
             날짜
@@ -208,6 +241,20 @@ export default function TransactionForm({
             placeholder="예: 이마트 장보기"
             maxLength={80}
             className="rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            특이사항 (선택)
+          </span>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="예: 다음 달에 환불 예정, 반반 나눠 낸 금액"
+            maxLength={200}
+            rows={2}
+            className="resize-none rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
           />
         </label>
 

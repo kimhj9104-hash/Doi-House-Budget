@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// 두이네 가계부 Firestore 보안 규칙
+// 도이네 가게부 Firestore 보안 규칙
 // Firebase 콘솔 > Firestore Database > 규칙(Rules) 탭에 이 파일 전체를 붙여넣고 게시(Publish)하세요.
 
 service cloud.firestore {
@@ -40,6 +40,10 @@ service cloud.firestore {
       }
 
       match /recurringTransactions/{recurringId} {
+        allow read, write: if isMember(householdId);
+      }
+
+      match /paymentMethods/{paymentMethodId} {
         allow read, write: if isMember(householdId);
       }
 

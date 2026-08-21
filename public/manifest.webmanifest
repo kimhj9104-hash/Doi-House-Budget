@@ -1,6 +1,6 @@
 {
-  "name": "두이네 가계부",
-  "short_name": "가계부",
+  "name": "도이네 가게부",
+  "short_name": "가게부",
   "description": "부부가 함께 쓰는 가계부",
   "start_url": "/dashboard",
   "display": "standalone",

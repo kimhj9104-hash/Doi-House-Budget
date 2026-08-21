@@ -22,13 +22,23 @@ export type Category = {
   sortOrder: number;
 };
 
+export type PaymentMethod = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
+};
+
 export type Transaction = {
   id: string;
   uid: string;
   categoryId: string | null;
+  paymentMethodId?: string | null;
   type: TransactionType;
   amount: number;
   memo: string;
+  note: string;
   occurredOn: string;
   createdAt: number;
   recurringId?: string | null;

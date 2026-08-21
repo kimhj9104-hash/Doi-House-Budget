@@ -6,7 +6,7 @@ import TransactionForm from "@/components/TransactionForm";
 import { addTransaction, type TransactionInput } from "@/lib/data/transactions";
 
 export default function NewTransactionPage() {
-  const { householdId, user, categories } = useAuth();
+  const { householdId, user, categories, paymentMethods } = useAuth();
 
   async function handleSubmit(input: TransactionInput) {
     if (!householdId || !user) return;
@@ -17,13 +17,16 @@ export default function NewTransactionPage() {
     <TransactionForm
       title="거래 추가"
       categories={categories}
+      paymentMethods={paymentMethods}
       onSubmit={handleSubmit}
       initial={{
         type: "expense",
         amount: 0,
         categoryId: null,
+        paymentMethodId: null,
         occurredOn: todayISODate(),
         memo: "",
+        note: "",
       }}
     />
   );

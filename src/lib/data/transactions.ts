@@ -12,8 +12,10 @@ export type TransactionInput = {
   type: TransactionType;
   amount: number;
   categoryId: string | null;
+  paymentMethodId: string | null;
   occurredOn: string;
   memo: string;
+  note: string;
 };
 
 export async function addTransaction(

@@ -16,7 +16,7 @@ import type { Transaction } from "@/lib/types";
 
 export default function EditTransactionPage() {
   const { id } = useParams<{ id: string }>();
-  const { householdId, categories } = useAuth();
+  const { householdId, categories, paymentMethods } = useAuth();
   const [transaction, setTransaction] = useState<Transaction | null | undefined>(undefined);
 
   useEffect(() => {
@@ -58,14 +58,17 @@ export default function EditTransactionPage() {
     <TransactionForm
       title="거래 수정"
       categories={categories}
+      paymentMethods={paymentMethods}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
       initial={{
         type: transaction.type,
         amount: Number(transaction.amount),
         categoryId: transaction.categoryId,
+        paymentMethodId: transaction.paymentMethodId ?? null,
         occurredOn: transaction.occurredOn,
         memo: transaction.memo,
+        note: transaction.note ?? "",
       }}
     />
   );

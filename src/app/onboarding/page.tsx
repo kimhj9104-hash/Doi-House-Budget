@@ -27,13 +27,25 @@ export default function OnboardingPage() {
     }
   }, [ready, user, householdId, router]);
 
+  async function resolveDisplayName(): Promise<string> {
+    // 회원가입 화면에서 입력한 이름은 sessionStorage에 남겨뒀다가 여기서 우선 사용한다.
+    // auth.currentUser.displayName은 방금 가입한 직후에는 아직 반영 전일 수 있어 신뢰할 수 없다.
+    const pending = sessionStorage.getItem("pendingDisplayName");
+    if (pending) {
+      sessionStorage.removeItem("pendingDisplayName");
+      return pending;
+    }
+    await auth.currentUser?.reload();
+    return auth.currentUser?.displayName || user?.email || "";
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
     setError("");
     setLoading(true);
     try {
-      const displayName = auth.currentUser?.displayName || user.email || "";
+      const displayName = await resolveDisplayName();
       await createHousehold(user.uid, displayName, name.trim());
       // 여기서 직접 이동하지 않고, householdId가 실시간 구독으로 반영되면
       // 위 useEffect가 자동으로 /dashboard로 보내준다 (미리 이동하면 아직
@@ -50,7 +62,7 @@ export default function OnboardingPage() {
     setError("");
     setLoading(true);
     try {
-      const displayName = auth.currentUser?.displayName || user.email || "";
+      const displayName = await resolveDisplayName();
       await joinHouseholdByCode(user.uid, displayName, code.trim());
       // createHousehold와 동일하게, 위 useEffect가 householdId 반영 후 이동시킨다
     } catch (err) {
@@ -115,7 +127,7 @@ export default function OnboardingPage() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="예: 두이네"
+                  placeholder="예: 도이네"
                   required
                   maxLength={30}
                   className="rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"

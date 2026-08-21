@@ -3,13 +3,13 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "두이네 가계부",
+  title: "도이네 가게부",
   description: "부부가 함께 쓰는 가계부",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "두이네 가계부",
+    title: "도이네 가게부",
   },
 };
 

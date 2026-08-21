@@ -30,6 +30,19 @@ const DEFAULT_CATEGORIES: {
   { name: "기타수입", type: "income", color: "#6b7280", icon: "more-horizontal", sortOrder: 4 },
 ];
 
+const DEFAULT_PAYMENT_METHODS: {
+  name: string;
+  color: string;
+  icon: string;
+  sortOrder: number;
+}[] = [
+  { name: "신용카드", color: "#2f6fed", icon: "credit-card", sortOrder: 1 },
+  { name: "체크카드", color: "#0891b2", icon: "credit-card", sortOrder: 2 },
+  { name: "현금", color: "#16a34a", icon: "wallet", sortOrder: 3 },
+  { name: "계좌이체", color: "#7c3aed", icon: "landmark", sortOrder: 4 },
+  { name: "간편결제", color: "#db2777", icon: "smartphone", sortOrder: 5 },
+];
+
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -63,6 +76,9 @@ export async function createHousehold(
   const categoryBatch = writeBatch(db);
   for (const category of DEFAULT_CATEGORIES) {
     categoryBatch.set(doc(collection(householdRef, "categories")), category);
+  }
+  for (const method of DEFAULT_PAYMENT_METHODS) {
+    categoryBatch.set(doc(collection(householdRef, "paymentMethods")), method);
   }
   await categoryBatch.commit();
 
