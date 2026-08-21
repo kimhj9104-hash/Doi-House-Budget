@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2-variations");
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Page & surfaces */
+  --background: #f4f5f7;
+  --surface: #ffffff;
+  --surface-hover: #f9fafb;
+
+  /* Text */
+  --foreground: #111827;
+  --muted-foreground: #6b7280;
+  --subtle-foreground: #9ca3af;
+
+  /* Borders */
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* Brand / primary */
+  --primary: #2f6fed;
+  --primary-hover: #2559c7;
+  --primary-foreground: #ffffff;
+  --primary-soft: #eaf1fe;
+
+  /* Sidebar (matches reference dashboard) */
+  --sidebar-bg: #161d34;
+  --sidebar-bg-active: #232c4d;
+  --sidebar-fg: #9aa3c0;
+  --sidebar-fg-active: #ffffff;
+  --sidebar-border: #262f52;
+
+  /* Semantic */
+  --income: #2f6fed;
+  --income-soft: #eaf1fe;
+  --expense: #e0433f;
+  --expense-soft: #fdecec;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+
+  --radius: 0.875rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-bg-active: var(--sidebar-bg-active);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-fg-active: var(--sidebar-fg-active);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-soft: var(--expense-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --font-sans: "Pretendard", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overscroll-behavior-y: none;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}

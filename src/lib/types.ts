@@ -1,0 +1,34 @@
+export type TransactionType = "income" | "expense";
+
+export type Household = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdAt: number;
+};
+
+export type HouseholdMember = {
+  uid: string;
+  displayName: string;
+  joinedAt: number;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  type: TransactionType;
+  color: string;
+  icon: string;
+  sortOrder: number;
+};
+
+export type Transaction = {
+  id: string;
+  uid: string;
+  categoryId: string | null;
+  type: TransactionType;
+  amount: number;
+  memo: string;
+  occurredOn: string;
+  createdAt: number;
+};

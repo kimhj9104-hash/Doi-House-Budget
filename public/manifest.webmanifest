@@ -1,0 +1,25 @@
+{
+  "name": "두이네 가계부",
+  "short_name": "가계부",
+  "description": "부부가 함께 쓰는 가계부",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#161d34",
+  "orientation": "portrait",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
