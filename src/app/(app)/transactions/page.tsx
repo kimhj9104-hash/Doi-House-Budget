@@ -10,6 +10,7 @@ import {
   currentMonthStr,
   formatDateLabel,
   formatSignedWon,
+  formatWon,
   shiftMonth,
 } from "@/lib/format";
 import { cardClass } from "@/lib/ui";
@@ -96,17 +97,21 @@ export default function TransactionsPage() {
   const categoryOptions = useMemo(
     () => [
       { value: "none", label: "미분류" },
-      ...categories.map((c) => ({
-        value: c.id,
-        label: `${c.type === "income" ? "수입" : "지출"} · ${c.name}`,
-      })),
+      ...categories
+        .map((c) => ({ value: c.id, label: `${c.type === "income" ? "수입" : "지출"} · ${c.name}`, type: c.type, name: c.name }))
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === "expense" ? -1 : 1;
+          return a.name.localeCompare(b.name, "ko");
+        }),
     ],
     [categories],
   );
   const paymentMethodOptions = useMemo(
     () => [
       { value: "none", label: "미지정" },
-      ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
+      ...[...paymentMethods]
+        .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+        .map((m) => ({ value: m.id, label: m.name })),
     ],
     [paymentMethods],
   );
@@ -159,6 +164,14 @@ export default function TransactionsPage() {
   const dayTransactions = selectedDay
     ? filtered.filter((t) => t.occurredOn === selectedDay)
     : [];
+
+  const totalIncome = filtered
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+  const totalExpense = filtered
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+  const netTotal = totalIncome - totalExpense;
 
   const [y, m] = month.split("-").map(Number);
   const monthLabel = `${y}년 ${m}월`;
@@ -259,6 +272,25 @@ export default function TransactionsPage() {
           >
             <CalendarDays size={13} />
           </button>
+        </div>
+      </div>
+
+      <div
+        className={`${cardClass} mb-4 grid grid-cols-3 divide-x divide-border text-center`}
+      >
+        <div className="px-2 py-3">
+          <p className="text-xs font-medium text-muted-foreground">수입</p>
+          <p className="mt-0.5 text-sm font-bold text-income">{formatWon(totalIncome)}</p>
+        </div>
+        <div className="px-2 py-3">
+          <p className="text-xs font-medium text-muted-foreground">지출</p>
+          <p className="mt-0.5 text-sm font-bold text-expense">{formatWon(totalExpense)}</p>
+        </div>
+        <div className="px-2 py-3">
+          <p className="text-xs font-medium text-muted-foreground">합계 ({filtered.length}건)</p>
+          <p className="mt-0.5 text-sm font-bold text-foreground">
+            {formatSignedWon(Math.abs(netTotal), netTotal >= 0 ? "income" : "expense")}
+          </p>
         </div>
       </div>
 
