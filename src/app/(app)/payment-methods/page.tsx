@@ -28,9 +28,9 @@ export default function PaymentMethodsPage() {
   if (!householdId) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 md:px-8 md:py-8">
+    <div className="mx-auto max-w-3xl px-4 py-5">
       <div className="mb-2 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-foreground md:text-xl">
+        <h1 className="text-lg font-bold text-foreground">
           결제수단
         </h1>
         <Link

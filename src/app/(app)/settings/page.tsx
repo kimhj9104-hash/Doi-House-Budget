@@ -33,8 +33,8 @@ export default function SettingsPage() {
   if (!household) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 md:px-8 md:py-8">
-      <h1 className="mb-5 text-lg font-bold text-foreground md:text-xl">설정</h1>
+    <div className="mx-auto max-w-3xl px-4 py-5">
+      <h1 className="mb-5 text-lg font-bold text-foreground">설정</h1>
 
       <div className={`${cardClass} mb-4 p-5`}>
         <h2 className="mb-3 text-sm font-bold text-foreground">가구 이름</h2>

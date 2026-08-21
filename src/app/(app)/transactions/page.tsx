@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, List, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMonthTransactions } from "@/hooks/useMonthTransactions";
 import {
@@ -15,6 +15,7 @@ import {
 import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
 import CalendarView from "@/components/CalendarView";
+import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import type { Category, PaymentMethod, Transaction, TransactionType } from "@/lib/types";
 
 const FILTERS: { key: "all" | TransactionType; label: string }[] = [
@@ -75,6 +76,9 @@ export default function TransactionsPage() {
   const { transactions } = useMonthTransactions(householdId, month);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilterIds, setCategoryFilterIds] = useState<string[]>([]);
+  const [paymentMethodFilterIds, setPaymentMethodFilterIds] = useState<string[]>([]);
 
   const memberMap = useMemo(
     () => new Map(members.map((m) => [m.uid, m.displayName])),
@@ -89,7 +93,58 @@ export default function TransactionsPage() {
     [paymentMethods],
   );
 
-  const filtered = filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
+  const categoryOptions = useMemo(
+    () => [
+      { value: "none", label: "미분류" },
+      ...categories.map((c) => ({
+        value: c.id,
+        label: `${c.type === "income" ? "수입" : "지출"} · ${c.name}`,
+      })),
+    ],
+    [categories],
+  );
+  const paymentMethodOptions = useMemo(
+    () => [
+      { value: "none", label: "미지정" },
+      ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
+    ],
+    [paymentMethods],
+  );
+
+  const filtered = useMemo(() => {
+    let list = filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
+
+    if (categoryFilterIds.length > 0) {
+      list = list.filter((t) => categoryFilterIds.includes(t.categoryId ?? "none"));
+    }
+    if (paymentMethodFilterIds.length > 0) {
+      list = list.filter((t) => paymentMethodFilterIds.includes(t.paymentMethodId ?? "none"));
+    }
+
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((t) => {
+        const cat = t.categoryId ? categoryMap.get(t.categoryId) : null;
+        const method = t.paymentMethodId ? paymentMethodMap.get(t.paymentMethodId) : null;
+        return (
+          (t.memo ?? "").toLowerCase().includes(q) ||
+          (t.note ?? "").toLowerCase().includes(q) ||
+          !!cat?.name.toLowerCase().includes(q) ||
+          !!method?.name.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return list;
+  }, [
+    transactions,
+    filter,
+    categoryFilterIds,
+    paymentMethodFilterIds,
+    search,
+    categoryMap,
+    paymentMethodMap,
+  ]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
@@ -118,9 +173,9 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 md:px-8 md:py-8">
+    <div className="mx-auto max-w-3xl px-4 py-5">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-foreground md:text-xl">
+        <h1 className="text-lg font-bold text-foreground">
           거래내역
         </h1>
         <div className="flex items-center gap-1">
@@ -140,6 +195,35 @@ export default function TransactionsPage() {
             <ChevronRight size={18} />
           </button>
         </div>
+      </div>
+
+      <div className="relative mb-3">
+        <Search
+          size={15}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle-foreground"
+        />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="메모, 특이사항, 카테고리, 결제수단으로 검색"
+          className="w-full rounded-xl border border-border-strong bg-white py-2.5 pl-9 pr-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
+        />
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <MultiSelectDropdown
+          label="카테고리"
+          options={categoryOptions}
+          selected={categoryFilterIds}
+          onChange={setCategoryFilterIds}
+        />
+        <MultiSelectDropdown
+          label="결제수단"
+          options={paymentMethodOptions}
+          selected={paymentMethodFilterIds}
+          onChange={setPaymentMethodFilterIds}
+        />
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-2">

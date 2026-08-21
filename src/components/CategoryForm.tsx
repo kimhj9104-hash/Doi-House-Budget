@@ -9,16 +9,34 @@ import type { CategoryInput } from "@/lib/data/categories";
 
 const COLOR_OPTIONS = [
   "#2f6fed",
-  "#e0433f",
-  "#f59e0b",
-  "#16a34a",
-  "#8b5cf6",
+  "#1d4ed8",
+  "#0ea5e9",
   "#0891b2",
-  "#db2777",
-  "#7c3aed",
+  "#06b6d4",
+  "#14b8a6",
+  "#16a34a",
   "#059669",
+  "#65a30d",
+  "#84cc16",
   "#ca8a04",
+  "#f59e0b",
+  "#f97316",
+  "#ea580c",
+  "#e0433f",
+  "#dc2626",
+  "#e11d48",
+  "#db2777",
+  "#ec4899",
+  "#c026d3",
+  "#a21caf",
+  "#8b5cf6",
+  "#7c3aed",
+  "#6d28d9",
+  "#4f46e5",
+  "#0f766e",
+  "#475569",
   "#64748b",
+  "#78716c",
   "#6b7280",
 ];
 
@@ -79,7 +97,7 @@ export default function CategoryForm({
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-4 md:px-8 md:py-8">
+    <div className="mx-auto max-w-lg px-4 py-4">
       <div className="mb-4 flex items-center gap-3">
         <button
           onClick={() => router.back()}

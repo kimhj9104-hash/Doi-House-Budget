@@ -99,7 +99,7 @@ export default function RecurringForm({
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-4 md:px-8 md:py-8">
+    <div className="mx-auto max-w-lg px-4 py-4">
       <div className="mb-4 flex items-center gap-3">
         <button
           onClick={() => router.back()}

@@ -1,6 +1,5 @@
-import Sidebar from "./Sidebar";
-import BottomNav from "./BottomNav";
 import TopBar from "./TopBar";
+import BottomNav from "./BottomNav";
 
 export default function AppShell({
   householdName,
@@ -10,13 +9,12 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-background md:h-screen md:overflow-hidden">
-      <Sidebar householdName={householdName} />
-      <div className="flex min-w-0 flex-1 flex-col md:overflow-y-auto">
+    <div className="flex min-h-screen justify-center bg-background-outer">
+      <div className="flex min-h-screen w-full max-w-md flex-col bg-background">
         <TopBar householdName={householdName} />
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <main className="flex-1 pb-20">{children}</main>
+        <BottomNav />
       </div>
-      <BottomNav />
     </div>
   );
 }

@@ -99,7 +99,7 @@ export default function TransactionForm({
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-4 md:px-8 md:py-8">
+    <div className="mx-auto max-w-lg px-4 py-4">
       <div className="mb-4 flex items-center gap-3">
         <button
           onClick={() => router.back()}
@@ -197,20 +197,22 @@ export default function TransactionForm({
             <span className="text-xs font-semibold text-muted-foreground">
               결제수단 (선택)
             </span>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2.5">
               {paymentMethods.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setPaymentMethodId(paymentMethodId === m.id ? "" : m.id)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-2.5 transition ${
                     paymentMethodId === m.id
-                      ? "border-primary bg-primary-soft text-primary"
-                      : "border-border bg-white text-foreground"
+                      ? "border-primary bg-primary-soft"
+                      : "border-border bg-white"
                   }`}
                 >
-                  <CategoryIcon icon={m.icon} color={m.color} size={12} />
-                  {m.name}
+                  <CategoryIcon icon={m.icon} color={m.color} size={16} />
+                  <span className="w-full truncate text-center text-[11px] font-medium text-foreground">
+                    {m.name}
+                  </span>
                 </button>
               ))}
             </div>

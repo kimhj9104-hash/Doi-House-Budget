@@ -10,11 +10,17 @@ import { currentMonthStr, formatSignedWon, formatWon, shiftMonth } from "@/lib/f
 import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
 import ExpenseDonutChart, { type CategorySlice } from "@/components/ExpenseDonutChart";
+import PaymentMethodBarChart, {
+  type PaymentMethodSlice,
+} from "@/components/PaymentMethodBarChart";
+import DailyExpenseBarChart, {
+  type DailyExpensePoint,
+} from "@/components/DailyExpenseBarChart";
 
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { householdId, members, categories } = useAuth();
+  const { householdId, members, categories, paymentMethods } = useAuth();
   const month = searchParams.get("month") ?? currentMonthStr();
   const { transactions } = useMonthTransactions(householdId, month);
 
@@ -25,6 +31,10 @@ export default function DashboardPage() {
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
+  );
+  const paymentMethodMap = useMemo(
+    () => new Map(paymentMethods.map((m) => [m.id, m])),
+    [paymentMethods],
   );
 
   const income = transactions
@@ -49,8 +59,33 @@ export default function DashboardPage() {
     return [...map.values()].sort((a, b) => b.value - a.value);
   }, [transactions, categoryMap]);
 
+  const paymentMethodData = useMemo(() => {
+    const map = new Map<string, PaymentMethodSlice>();
+    for (const t of transactions) {
+      if (t.type !== "expense") continue;
+      const method = t.paymentMethodId ? paymentMethodMap.get(t.paymentMethodId) : null;
+      const key = method?.name ?? "미지정";
+      const color = method?.color ?? "#6b7280";
+      const existing = map.get(key);
+      if (existing) existing.value += Number(t.amount);
+      else map.set(key, { name: key, value: Number(t.amount), color });
+    }
+    return [...map.values()].sort((a, b) => b.value - a.value);
+  }, [transactions, paymentMethodMap]);
+
   const [y, m] = month.split("-").map(Number);
   const monthLabel = `${y}년 ${m}월`;
+
+  const dailyExpenseData = useMemo<DailyExpensePoint[]>(() => {
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const totals = new Array(daysInMonth).fill(0);
+    for (const t of transactions) {
+      if (t.type !== "expense") continue;
+      const day = Number(t.occurredOn.slice(8, 10));
+      if (day >= 1 && day <= daysInMonth) totals[day - 1] += Number(t.amount);
+    }
+    return totals.map((value, i) => ({ day: i + 1, value }));
+  }, [transactions, y, m]);
   const recent = transactions.slice(0, 8);
 
   function goToMonth(next: string) {
@@ -58,9 +93,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 md:px-8 md:py-8">
+    <div className="mx-auto max-w-3xl px-4 py-5">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-foreground md:text-xl">
+        <h1 className="text-lg font-bold text-foreground">
           대시보드
         </h1>
         <div className="flex items-center gap-1">
@@ -83,23 +118,23 @@ export default function DashboardPage() {
       </div>
 
       <div
-        className={`${cardClass} grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0`}
+        className={`${cardClass} grid grid-cols-1 divide-y divide-border`}
       >
-        <div className="flex items-center justify-between px-4 py-3.5 md:flex-col md:items-start md:gap-1.5">
+        <div className="flex items-center justify-between px-4 py-3.5">
           <p className="text-xs font-medium text-muted-foreground">수입</p>
-          <p className="text-base font-bold text-income md:text-lg">
+          <p className="text-base font-bold text-income">
             {formatWon(income)}
           </p>
         </div>
-        <div className="flex items-center justify-between px-4 py-3.5 md:flex-col md:items-start md:gap-1.5">
+        <div className="flex items-center justify-between px-4 py-3.5">
           <p className="text-xs font-medium text-muted-foreground">지출</p>
-          <p className="text-base font-bold text-expense md:text-lg">
+          <p className="text-base font-bold text-expense">
             {formatWon(expense)}
           </p>
         </div>
-        <div className="flex items-center justify-between px-4 py-3.5 md:flex-col md:items-start md:gap-1.5">
+        <div className="flex items-center justify-between px-4 py-3.5">
           <p className="text-xs font-medium text-muted-foreground">잔액</p>
-          <p className="text-base font-bold text-foreground md:text-lg">
+          <p className="text-base font-bold text-foreground">
             {formatWon(balance)}
           </p>
         </div>
@@ -126,6 +161,20 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className={`${cardClass} mt-4 p-5`}>
+        <h2 className="mb-2 text-sm font-bold text-foreground">
+          결제수단별 지출
+        </h2>
+        <PaymentMethodBarChart data={paymentMethodData} />
+      </div>
+
+      <div className={`${cardClass} mt-4 p-5`}>
+        <h2 className="mb-2 text-sm font-bold text-foreground">
+          일별 지출 추이
+        </h2>
+        <DailyExpenseBarChart data={dailyExpenseData} />
       </div>
 
       <div className={`${cardClass} mt-4 p-5`}>
