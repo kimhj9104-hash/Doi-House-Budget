@@ -11,7 +11,7 @@ import {
 
 export default function EditRecurringPage() {
   const { id } = useParams<{ id: string }>();
-  const { householdId, categories, recurringTransactions } = useAuth();
+  const { householdId, categories, paymentMethods, recurringTransactions } = useAuth();
   const item = recurringTransactions.find((r) => r.id === id);
 
   if (!item) {
@@ -36,6 +36,7 @@ export default function EditRecurringPage() {
     <RecurringForm
       title="고정 수입/지출 수정"
       categories={categories}
+      paymentMethods={paymentMethods}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
       initial={{
@@ -43,7 +44,9 @@ export default function EditRecurringPage() {
         type: item.type,
         amount: item.amount,
         categoryId: item.categoryId,
+        paymentMethodId: item.paymentMethodId ?? null,
         memo: item.memo,
+        note: item.note ?? "",
         dayOfMonth: item.dayOfMonth,
         active: item.active,
       }}

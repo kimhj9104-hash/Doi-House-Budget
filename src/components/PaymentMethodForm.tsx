@@ -42,7 +42,7 @@ const COLOR_OPTIONS = [
 type Props = {
   onSubmit: (input: PaymentMethodInput) => Promise<void>;
   onDelete?: () => Promise<void>;
-  initial?: { name: string; color: string; icon: string };
+  initial?: { name: string; color: string; icon: string; note: string };
   title: string;
 };
 
@@ -51,6 +51,7 @@ export default function PaymentMethodForm({ onSubmit, onDelete, initial, title }
   const [name, setName] = useState(initial?.name ?? "");
   const [color, setColor] = useState(initial?.color ?? COLOR_OPTIONS[0]);
   const [icon, setIcon] = useState(initial?.icon ?? "credit-card");
+  const [note, setNote] = useState(initial?.note ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -63,7 +64,7 @@ export default function PaymentMethodForm({ onSubmit, onDelete, initial, title }
     setError("");
     setPending(true);
     try {
-      await onSubmit({ name: name.trim(), color, icon });
+      await onSubmit({ name: name.trim(), color, icon, note: note.trim() });
       router.push("/payment-methods");
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장하지 못했어요");
@@ -157,6 +158,20 @@ export default function PaymentMethodForm({ onSubmit, onDelete, initial, title }
             ))}
           </div>
         </div>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            특이사항 (선택)
+          </span>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="예: 매월 15일 결제, 가족카드"
+            maxLength={200}
+            rows={2}
+            className="resize-none rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
+          />
+        </label>
 
         <button
           type="submit"

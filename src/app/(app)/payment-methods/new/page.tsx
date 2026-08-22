@@ -16,7 +16,7 @@ export default function NewPaymentMethodPage() {
     <PaymentMethodForm
       title="결제수단 추가"
       onSubmit={handleSubmit}
-      initial={{ name: "", color: "#2f6fed", icon: "credit-card" }}
+      initial={{ name: "", color: "#2f6fed", icon: "credit-card", note: "" }}
     />
   );
 }

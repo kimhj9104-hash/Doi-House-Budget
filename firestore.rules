@@ -51,6 +51,11 @@ service cloud.firestore {
         allow read, update, delete: if isMember(householdId);
         allow create: if isMember(householdId) && request.resource.data.uid == request.auth.uid;
       }
+
+      match /notes/{noteId} {
+        allow read, update, delete: if isMember(householdId);
+        allow create: if isMember(householdId) && request.resource.data.uid == request.auth.uid;
+      }
     }
   }
 }

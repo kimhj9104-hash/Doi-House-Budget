@@ -22,6 +22,7 @@ import type {
   Category,
   Household,
   HouseholdMember,
+  Note,
   PaymentMethod,
   RecurringTransaction,
 } from "@/lib/types";
@@ -36,6 +37,7 @@ type AuthContextValue = {
   categories: Category[];
   recurringTransactions: RecurringTransaction[];
   paymentMethods: PaymentMethod[];
+  notes: Note[];
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -48,6 +50,7 @@ const AuthContext = createContext<AuthContextValue>({
   categories: [],
   recurringTransactions: [],
   paymentMethods: [],
+  notes: [],
 });
 
 function describeFirestoreError(err: unknown): string {
@@ -69,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [householdDataResolved, setHouseholdDataResolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -118,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCategories([]);
       setRecurringTransactions([]);
       setPaymentMethods([]);
+      setNotes([]);
       setHouseholdDataResolved(true);
       return;
     }
@@ -129,8 +134,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let gotCategories = false;
     let gotRecurring = false;
     let gotPaymentMethods = false;
+    let gotNotes = false;
     const checkDone = () => {
-      if (gotHousehold && gotMembers && gotCategories && gotRecurring && gotPaymentMethods) {
+      if (
+        gotHousehold &&
+        gotMembers &&
+        gotCategories &&
+        gotRecurring &&
+        gotPaymentMethods &&
+        gotNotes
+      ) {
         setHouseholdDataResolved(true);
       }
     };
@@ -153,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       gotCategories = true;
       gotRecurring = true;
       gotPaymentMethods = true;
+      gotNotes = true;
       checkDone();
     };
 
@@ -222,12 +236,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       onError,
     );
 
+    const unsubNotes = onSnapshot(
+      query(
+        collection(db, "households", householdId, "notes"),
+        orderBy("createdAt", "desc"),
+      ),
+      (snap) => {
+        setNotes(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Note, "id">) })));
+        gotNotes = true;
+        checkDone();
+      },
+      onError,
+    );
+
     return () => {
       unsubHousehold();
       unsubMembers();
       unsubCategories();
       unsubRecurring();
       unsubPaymentMethods();
+      unsubNotes();
     };
   }, [householdId, retryKey]);
 
@@ -259,6 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       categories,
       recurringTransactions,
       paymentMethods,
+      notes,
     }),
     [
       ready,
@@ -270,6 +299,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       categories,
       recurringTransactions,
       paymentMethods,
+      notes,
     ],
   );
 

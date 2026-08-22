@@ -17,7 +17,7 @@ import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
 import CalendarView from "@/components/CalendarView";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
-import type { Category, PaymentMethod, Transaction, TransactionType } from "@/lib/types";
+import type { Category, Transaction, TransactionType } from "@/lib/types";
 
 const FILTERS: { key: "all" | TransactionType; label: string }[] = [
   { key: "all", label: "전체" },
@@ -28,16 +28,11 @@ const FILTERS: { key: "all" | TransactionType; label: string }[] = [
 function TransactionRow({
   t,
   categoryMap,
-  paymentMethodMap,
-  memberMap,
 }: {
   t: Transaction;
   categoryMap: Map<string, Category>;
-  paymentMethodMap: Map<string, PaymentMethod>;
-  memberMap: Map<string, string>;
 }) {
   const cat = t.categoryId ? categoryMap.get(t.categoryId) : null;
-  const method = t.paymentMethodId ? paymentMethodMap.get(t.paymentMethodId) : null;
   return (
     <Link
       href={`/transactions/${t.id}/edit`}
@@ -49,13 +44,6 @@ function TransactionRow({
           {cat?.name ?? "미분류"}
           {t.memo ? ` · ${t.memo}` : ""}
         </p>
-        <p className="truncate text-xs text-subtle-foreground">
-          {memberMap.get(t.uid) || "가족"}
-          {method ? ` · ${method.name}` : ""}
-        </p>
-        {t.note && (
-          <p className="mt-0.5 truncate text-xs italic text-subtle-foreground">{t.note}</p>
-        )}
       </div>
       <span
         className={`shrink-0 text-sm font-bold ${
@@ -71,7 +59,7 @@ function TransactionRow({
 export default function TransactionsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { householdId, members, categories, paymentMethods } = useAuth();
+  const { householdId, categories, paymentMethods } = useAuth();
   const month = searchParams.get("month") ?? currentMonthStr();
   const filter = (searchParams.get("filter") ?? "all") as "all" | TransactionType;
   const { transactions } = useMonthTransactions(householdId, month);
@@ -81,10 +69,6 @@ export default function TransactionsPage() {
   const [categoryFilterIds, setCategoryFilterIds] = useState<string[]>([]);
   const [paymentMethodFilterIds, setPaymentMethodFilterIds] = useState<string[]>([]);
 
-  const memberMap = useMemo(
-    () => new Map(members.map((m) => [m.uid, m.displayName])),
-    [members],
-  );
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
@@ -320,8 +304,6 @@ export default function TransactionsPage() {
                       key={t.id}
                       t={t}
                       categoryMap={categoryMap}
-                      paymentMethodMap={paymentMethodMap}
-                      memberMap={memberMap}
                     />
                   ))
                 )}
@@ -354,8 +336,6 @@ export default function TransactionsPage() {
                     key={t.id}
                     t={t}
                     categoryMap={categoryMap}
-                    paymentMethodMap={paymentMethodMap}
-                    memberMap={memberMap}
                   />
                 ))}
               </div>

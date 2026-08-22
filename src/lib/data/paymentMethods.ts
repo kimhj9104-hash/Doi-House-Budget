@@ -13,6 +13,7 @@ export type PaymentMethodInput = {
   name: string;
   icon: string;
   color: string;
+  note: string;
 };
 
 export async function addPaymentMethod(

@@ -20,14 +20,10 @@ import DailyExpenseBarChart, {
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { householdId, members, categories, paymentMethods } = useAuth();
+  const { householdId, categories, paymentMethods } = useAuth();
   const month = searchParams.get("month") ?? currentMonthStr();
   const { transactions } = useMonthTransactions(householdId, month);
 
-  const memberMap = useMemo(
-    () => new Map(members.map((m) => [m.uid, m.displayName])),
-    [members],
-  );
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
@@ -208,9 +204,6 @@ export default function DashboardPage() {
                     <p className="truncate text-sm font-medium text-foreground">
                       {cat?.name ?? "미분류"}
                       {t.memo ? ` · ${t.memo}` : ""}
-                    </p>
-                    <p className="text-xs text-subtle-foreground">
-                      {memberMap.get(t.uid) || "가족"}
                     </p>
                   </div>
                   <span

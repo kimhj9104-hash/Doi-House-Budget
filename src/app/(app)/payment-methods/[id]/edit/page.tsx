@@ -37,7 +37,7 @@ export default function EditPaymentMethodPage() {
       title="결제수단 수정"
       onSubmit={handleSubmit}
       onDelete={handleDelete}
-      initial={{ name: method.name, color: method.color, icon: method.icon }}
+      initial={{ name: method.name, color: method.color, icon: method.icon, note: method.note ?? "" }}
     />
   );
 }

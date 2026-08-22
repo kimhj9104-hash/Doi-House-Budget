@@ -27,6 +27,7 @@ export type PaymentMethod = {
   name: string;
   icon: string;
   color: string;
+  note: string;
   sortOrder: number;
 };
 
@@ -44,14 +45,26 @@ export type Transaction = {
   recurringId?: string | null;
 };
 
+export type Note = {
+  id: string;
+  title: string;
+  content: string;
+  uid: string;
+  createdAt: number;
+  updatedAt?: number;
+};
+
 export type RecurringTransaction = {
   id: string;
   name: string;
   type: TransactionType;
   amount: number;
   categoryId: string | null;
+  paymentMethodId?: string | null;
   memo: string;
+  note: string;
   dayOfMonth: number;
   active: boolean;
   createdAt: number;
+  sortOrder?: number;
 };

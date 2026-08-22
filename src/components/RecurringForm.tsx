@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import CategoryIcon from "./CategoryIcon";
-import type { Category, TransactionType } from "@/lib/types";
+import type { Category, PaymentMethod, TransactionType } from "@/lib/types";
 import type { RecurringInput } from "@/lib/data/recurring";
 
 type Props = {
   categories: Category[];
+  paymentMethods: PaymentMethod[];
   onSubmit: (input: RecurringInput) => Promise<void>;
   onDelete?: () => Promise<void>;
   initial?: {
@@ -16,7 +17,9 @@ type Props = {
     type: TransactionType;
     amount: number;
     categoryId: string | null;
+    paymentMethodId: string | null;
     memo: string;
+    note: string;
     dayOfMonth: number;
     active: boolean;
   };
@@ -27,6 +30,7 @@ const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
 export default function RecurringForm({
   categories,
+  paymentMethods,
   onSubmit,
   onDelete,
   initial,
@@ -36,11 +40,13 @@ export default function RecurringForm({
   const [type, setType] = useState<TransactionType>(initial?.type ?? "expense");
   const [name, setName] = useState(initial?.name ?? "");
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
+  const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
   const [amountDisplay, setAmountDisplay] = useState(
     initial?.amount ? String(initial.amount) : "",
   );
   const [dayOfMonth, setDayOfMonth] = useState(initial?.dayOfMonth ?? 1);
   const [memo, setMemo] = useState(initial?.memo ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
   const [active, setActive] = useState(initial?.active ?? true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -74,7 +80,9 @@ export default function RecurringForm({
         type,
         amount,
         categoryId: categoryId || null,
+        paymentMethodId: paymentMethodId || null,
         memo: memo.trim(),
+        note: note.trim(),
         dayOfMonth,
         active,
       });
@@ -207,6 +215,33 @@ export default function RecurringForm({
           </div>
         </div>
 
+        {paymentMethods.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">
+              결제수단 (선택)
+            </span>
+            <div className="grid grid-cols-4 gap-2.5">
+              {paymentMethods.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setPaymentMethodId(paymentMethodId === m.id ? "" : m.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-2.5 transition ${
+                    paymentMethodId === m.id
+                      ? "border-primary bg-primary-soft"
+                      : "border-border bg-white"
+                  }`}
+                >
+                  <CategoryIcon icon={m.icon} color={m.color} size={16} />
+                  <span className="w-full truncate text-center text-[11px] font-medium text-foreground">
+                    {m.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-muted-foreground">
             매월 며칠
@@ -238,6 +273,20 @@ export default function RecurringForm({
             placeholder="비워두면 이름이 메모로 사용돼요"
             maxLength={80}
             className="rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            특이사항 (선택)
+          </span>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="예: 매년 3월에 요금 인상 예정"
+            maxLength={200}
+            rows={2}
+            className="resize-none rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
           />
         </label>
 

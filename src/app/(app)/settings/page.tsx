@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, CreditCard, LogOut, Repeat, Users } from "lucide-react";
+import { ChevronRight, CreditCard, LogOut, Repeat, Tags, Users } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,6 +86,20 @@ export default function SettingsPage() {
           <p className="text-sm font-bold text-foreground">결제수단 관리</p>
           <p className="text-xs text-muted-foreground">
             카드/현금/계좌이체 등 거래 등록 시 고를 결제수단을 관리해요
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-subtle-foreground" />
+      </Link>
+
+      <Link
+        href="/categories"
+        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
+      >
+        <Tags size={17} className="text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">카테고리 관리</p>
+          <p className="text-xs text-muted-foreground">
+            거래 등록 시 고를 지출/수입 카테고리를 관리해요
           </p>
         </div>
         <ChevronRight size={16} className="text-subtle-foreground" />
