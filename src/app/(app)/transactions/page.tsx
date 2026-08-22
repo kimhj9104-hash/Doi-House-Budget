@@ -9,6 +9,7 @@ import { useTransactionsInRange } from "@/hooks/useMonthTransactions";
 import {
   currentMonthStr,
   formatDateLabel,
+  formatDateShort,
   formatSignedWon,
   formatWon,
   monthRange,
@@ -200,12 +201,14 @@ export default function TransactionsPage() {
           <button
             type="button"
             onClick={() => setDateRange("", "")}
-            className="flex items-center gap-1 rounded-full border border-primary bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary"
+            className="flex min-w-0 items-center gap-1 rounded-full border border-primary bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary"
           >
-            {rangeStart === rangeEnd
-              ? formatDateLabel(rangeStart)
-              : `${formatDateLabel(rangeStart)} ~ ${formatDateLabel(rangeEnd)}`}
-            <X size={12} />
+            <span className="truncate">
+              {rangeStart === rangeEnd
+                ? formatDateLabel(rangeStart)
+                : `${formatDateShort(rangeStart)} ~ ${formatDateShort(rangeEnd)}`}
+            </span>
+            <X size={12} className="shrink-0" />
           </button>
         ) : (
           <div className="flex items-center gap-1">
@@ -299,17 +302,23 @@ export default function TransactionsPage() {
       <div
         className={`${cardClass} mb-4 grid grid-cols-3 divide-x divide-border text-center`}
       >
-        <div className="px-2 py-3">
+        <div className="min-w-0 px-1.5 py-3">
           <p className="text-xs font-medium text-muted-foreground">수입</p>
-          <p className="mt-0.5 text-sm font-bold text-income">{formatWon(totalIncome)}</p>
+          <p className="mt-0.5 truncate text-xs font-bold text-income">
+            {formatWon(totalIncome)}
+          </p>
         </div>
-        <div className="px-2 py-3">
+        <div className="min-w-0 px-1.5 py-3">
           <p className="text-xs font-medium text-muted-foreground">지출</p>
-          <p className="mt-0.5 text-sm font-bold text-expense">{formatWon(totalExpense)}</p>
+          <p className="mt-0.5 truncate text-xs font-bold text-expense">
+            {formatWon(totalExpense)}
+          </p>
         </div>
-        <div className="px-2 py-3">
-          <p className="text-xs font-medium text-muted-foreground">합계 ({filtered.length}건)</p>
-          <p className="mt-0.5 text-sm font-bold text-foreground">
+        <div className="min-w-0 px-1.5 py-3">
+          <p className="truncate text-xs font-medium text-muted-foreground">
+            합계 ({filtered.length}건)
+          </p>
+          <p className="mt-0.5 truncate text-xs font-bold text-foreground">
             {formatSignedWon(Math.abs(netTotal), netTotal >= 0 ? "income" : "expense")}
           </p>
         </div>

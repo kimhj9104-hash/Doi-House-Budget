@@ -14,6 +14,11 @@ export function formatDateLabel(dateStr: string): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
 }
 
+export function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 export function toISODate(ts: number): string {
   const d = new Date(ts);
   const tz = d.getTimezoneOffset();

@@ -15,9 +15,23 @@ type Props = {
   onChange: (values: string[]) => void;
 };
 
+const PANEL_WIDTH = 208; // w-52
+
 export default function MultiSelectDropdown({ label, options, selected, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  function handleToggle() {
+    setOpen((o) => {
+      const next = !o;
+      if (next && ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        setAlignRight(rect.left + PANEL_WIDTH > window.innerWidth - 8);
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -49,7 +63,7 @@ export default function MultiSelectDropdown({ label, options, selected, onChange
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
         className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
           selected.length > 0
             ? "border-primary bg-primary-soft text-primary"
@@ -61,7 +75,11 @@ export default function MultiSelectDropdown({ label, options, selected, onChange
       </button>
 
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 max-h-72 w-52 overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-lg">
+        <div
+          className={`absolute top-[calc(100%+6px)] z-20 max-h-72 w-52 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-lg ${
+            alignRight ? "right-0" : "left-0"
+          }`}
+        >
           <button
             type="button"
             onClick={() => onChange([])}

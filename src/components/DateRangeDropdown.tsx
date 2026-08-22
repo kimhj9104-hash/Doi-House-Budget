@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CalendarRange, ChevronDown } from "lucide-react";
-import { formatDateLabel } from "@/lib/format";
+import { formatDateLabel, formatDateShort } from "@/lib/format";
 
 type Props = {
   startDate: string;
@@ -10,8 +10,11 @@ type Props = {
   onChange: (startDate: string, endDate: string) => void;
 };
 
+const PANEL_WIDTH = 256; // w-64
+
 export default function DateRangeDropdown({ startDate, endDate, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const [draftStart, setDraftStart] = useState(startDate);
   const [draftEnd, setDraftEnd] = useState(endDate);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,7 +35,7 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
     startDate && endDate
       ? startDate === endDate
         ? formatDateLabel(startDate)
-        : `${formatDateLabel(startDate)} ~ ${formatDateLabel(endDate)}`
+        : `${formatDateShort(startDate)} ~ ${formatDateShort(endDate)}`
       : "기간 설정";
 
   function applyAndClose() {
@@ -57,6 +60,10 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
             if (next) {
               setDraftStart(startDate);
               setDraftEnd(endDate);
+              if (ref.current) {
+                const rect = ref.current.getBoundingClientRect();
+                setAlignRight(rect.left + PANEL_WIDTH > window.innerWidth - 8);
+              }
             }
             return next;
           });
@@ -73,7 +80,11 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
       </button>
 
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-64 rounded-xl border border-border bg-surface p-3 shadow-lg">
+        <div
+          className={`absolute top-[calc(100%+6px)] z-20 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-surface p-3 shadow-lg ${
+            alignRight ? "right-0" : "left-0"
+          }`}
+        >
           <div className="flex flex-col gap-2">
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold text-muted-foreground">시작일</span>
