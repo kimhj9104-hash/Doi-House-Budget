@@ -8,7 +8,13 @@ export type DailyExpensePoint = {
   value: number;
 };
 
-export default function DailyExpenseBarChart({ data }: { data: DailyExpensePoint[] }) {
+export default function DailyExpenseBarChart({
+  data,
+  onBarClick,
+}: {
+  data: DailyExpensePoint[];
+  onBarClick?: (day: number) => void;
+}) {
   const hasData = data.some((d) => d.value > 0);
   if (!hasData) {
     return (
@@ -39,7 +45,20 @@ export default function DailyExpenseBarChart({ data }: { data: DailyExpensePoint
               fontSize: 12,
             }}
           />
-          <Bar dataKey="value" fill="var(--expense)" radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey="value"
+            fill="var(--expense)"
+            radius={[4, 4, 0, 0]}
+            onClick={
+              onBarClick
+                ? (entry) => {
+                    const day = (entry.payload as DailyExpensePoint | undefined)?.day;
+                    if (day) onBarClick(day);
+                  }
+                : undefined
+            }
+            className={onBarClick ? "cursor-pointer" : ""}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

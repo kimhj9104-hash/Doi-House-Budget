@@ -4,12 +4,19 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { formatWon } from "@/lib/format";
 
 export type PaymentMethodSlice = {
+  id: string;
   name: string;
   value: number;
   color: string;
 };
 
-export default function PaymentMethodBarChart({ data }: { data: PaymentMethodSlice[] }) {
+export default function PaymentMethodBarChart({
+  data,
+  onBarClick,
+}: {
+  data: PaymentMethodSlice[];
+  onBarClick?: (id: string) => void;
+}) {
   if (data.length === 0) {
     return (
       <div className="flex h-40 items-center justify-center text-sm text-subtle-foreground">
@@ -45,7 +52,20 @@ export default function PaymentMethodBarChart({ data }: { data: PaymentMethodSli
               fontSize: 12,
             }}
           />
-          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={16}>
+          <Bar
+            dataKey="value"
+            radius={[0, 6, 6, 0]}
+            barSize={16}
+            onClick={
+              onBarClick
+                ? (entry) => {
+                    const id = (entry.payload as PaymentMethodSlice | undefined)?.id;
+                    if (id) onBarClick(id);
+                  }
+                : undefined
+            }
+            className={onBarClick ? "cursor-pointer" : ""}
+          >
             {data.map((slice, i) => (
               <Cell key={i} fill={slice.color} />
             ))}

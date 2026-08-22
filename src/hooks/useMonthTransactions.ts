@@ -6,16 +6,19 @@ import { db } from "@/lib/firebase";
 import { monthRange } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
-export function useMonthTransactions(householdId: string | null, month: string) {
+export function useTransactionsInRange(
+  householdId: string | null,
+  start: string,
+  end: string,
+) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!householdId) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- show loading while switching months instead of stale data
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- show loading while switching range instead of stale data
     setLoading(true);
-    const { start, end } = monthRange(month);
 
     const q = query(
       collection(db, "households", householdId, "transactions"),
@@ -43,7 +46,12 @@ export function useMonthTransactions(householdId: string | null, month: string) 
     );
 
     return unsubscribe;
-  }, [householdId, month]);
+  }, [householdId, start, end]);
 
   return { transactions, loading, error };
+}
+
+export function useMonthTransactions(householdId: string | null, month: string) {
+  const { start, end } = monthRange(month);
+  return useTransactionsInRange(householdId, start, end);
 }

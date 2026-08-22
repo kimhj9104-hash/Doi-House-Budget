@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { formatWon } from "@/lib/format";
 
 export type CategorySlice = {
+  id: string;
   name: string;
   value: number;
   color: string;
@@ -12,9 +13,11 @@ export type CategorySlice = {
 export default function ExpenseDonutChart({
   data,
   total,
+  onSliceClick,
 }: {
   data: CategorySlice[];
   total: number;
+  onSliceClick?: (id: string) => void;
 }) {
   if (data.length === 0) {
     return (
@@ -36,6 +39,15 @@ export default function ExpenseDonutChart({
             outerRadius="100%"
             paddingAngle={2}
             stroke="none"
+            onClick={
+              onSliceClick
+                ? (entry) => {
+                    const id = (entry.payload as CategorySlice | undefined)?.id;
+                    if (id) onSliceClick(id);
+                  }
+                : undefined
+            }
+            className={onSliceClick ? "cursor-pointer" : ""}
           >
             {data.map((slice, i) => (
               <Cell key={i} fill={slice.color} />

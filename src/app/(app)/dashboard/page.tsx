@@ -46,11 +46,12 @@ export default function DashboardPage() {
     for (const t of transactions) {
       if (t.type !== "expense") continue;
       const cat = t.categoryId ? categoryMap.get(t.categoryId) : null;
-      const key = cat?.name ?? "기타";
+      const id = t.categoryId ?? "none";
+      const name = cat?.name ?? "기타";
       const color = cat?.color ?? "#6b7280";
-      const existing = map.get(key);
+      const existing = map.get(id);
       if (existing) existing.value += Number(t.amount);
-      else map.set(key, { name: key, value: Number(t.amount), color });
+      else map.set(id, { id, name, value: Number(t.amount), color });
     }
     return [...map.values()].sort((a, b) => b.value - a.value);
   }, [transactions, categoryMap]);
@@ -60,14 +61,26 @@ export default function DashboardPage() {
     for (const t of transactions) {
       if (t.type !== "expense") continue;
       const method = t.paymentMethodId ? paymentMethodMap.get(t.paymentMethodId) : null;
-      const key = method?.name ?? "미지정";
+      const id = t.paymentMethodId ?? "none";
+      const name = method?.name ?? "미지정";
       const color = method?.color ?? "#6b7280";
-      const existing = map.get(key);
+      const existing = map.get(id);
       if (existing) existing.value += Number(t.amount);
-      else map.set(key, { name: key, value: Number(t.amount), color });
+      else map.set(id, { id, name, value: Number(t.amount), color });
     }
     return [...map.values()].sort((a, b) => b.value - a.value);
   }, [transactions, paymentMethodMap]);
+
+  function goToFilteredTransactions(kind: "categoryId" | "paymentMethodId", id: string) {
+    const params = new URLSearchParams({ month, filter: "expense", [kind]: id });
+    router.push(`/transactions?${params.toString()}`);
+  }
+
+  function goToDayTransactions(day: number) {
+    const occurredOn = `${month}-${String(day).padStart(2, "0")}`;
+    const params = new URLSearchParams({ month, filter: "expense", occurredOn });
+    router.push(`/transactions?${params.toString()}`);
+  }
 
   const [y, m] = month.split("-").map(Number);
   const monthLabel = `${y}년 ${m}월`;
@@ -140,11 +153,20 @@ export default function DashboardPage() {
         <h2 className="mb-2 text-sm font-bold text-foreground">
           카테고리별 지출
         </h2>
-        <ExpenseDonutChart data={chartData} total={expense} />
+        <ExpenseDonutChart
+          data={chartData}
+          total={expense}
+          onSliceClick={(id) => goToFilteredTransactions("categoryId", id)}
+        />
         {chartData.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
             {chartData.slice(0, 6).map((slice) => (
-              <div key={slice.name} className="flex items-center gap-2 text-xs">
+              <button
+                key={slice.id}
+                type="button"
+                onClick={() => goToFilteredTransactions("categoryId", slice.id)}
+                className="flex items-center gap-2 rounded-lg text-xs transition hover:bg-surface-hover"
+              >
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: slice.color }}
@@ -153,7 +175,7 @@ export default function DashboardPage() {
                 <span className="ml-auto shrink-0 font-semibold text-foreground">
                   {formatWon(slice.value)}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -163,14 +185,17 @@ export default function DashboardPage() {
         <h2 className="mb-2 text-sm font-bold text-foreground">
           결제수단별 지출
         </h2>
-        <PaymentMethodBarChart data={paymentMethodData} />
+        <PaymentMethodBarChart
+          data={paymentMethodData}
+          onBarClick={(id) => goToFilteredTransactions("paymentMethodId", id)}
+        />
       </div>
 
       <div className={`${cardClass} mt-4 p-5`}>
         <h2 className="mb-2 text-sm font-bold text-foreground">
           일별 지출 추이
         </h2>
-        <DailyExpenseBarChart data={dailyExpenseData} />
+        <DailyExpenseBarChart data={dailyExpenseData} onBarClick={goToDayTransactions} />
       </div>
 
       <div className={`${cardClass} mt-4 p-5`}>

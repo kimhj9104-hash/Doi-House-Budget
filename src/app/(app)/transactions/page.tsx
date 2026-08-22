@@ -3,20 +3,22 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronLeft, ChevronRight, List, Search } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMonthTransactions } from "@/hooks/useMonthTransactions";
+import { useTransactionsInRange } from "@/hooks/useMonthTransactions";
 import {
   currentMonthStr,
   formatDateLabel,
   formatSignedWon,
   formatWon,
+  monthRange,
   shiftMonth,
 } from "@/lib/format";
 import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
 import CalendarView from "@/components/CalendarView";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
+import DateRangeDropdown from "@/components/DateRangeDropdown";
 import type { Category, Transaction, TransactionType } from "@/lib/types";
 
 const FILTERS: { key: "all" | TransactionType; label: string }[] = [
@@ -62,12 +64,31 @@ export default function TransactionsPage() {
   const { householdId, categories, paymentMethods } = useAuth();
   const month = searchParams.get("month") ?? currentMonthStr();
   const filter = (searchParams.get("filter") ?? "all") as "all" | TransactionType;
-  const { transactions } = useMonthTransactions(householdId, month);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilterIds, setCategoryFilterIds] = useState<string[]>([]);
-  const [paymentMethodFilterIds, setPaymentMethodFilterIds] = useState<string[]>([]);
+  const [categoryFilterIds, setCategoryFilterIds] = useState<string[]>(() => {
+    const id = searchParams.get("categoryId");
+    return id ? [id] : [];
+  });
+  const [paymentMethodFilterIds, setPaymentMethodFilterIds] = useState<string[]>(() => {
+    const id = searchParams.get("paymentMethodId");
+    return id ? [id] : [];
+  });
+  const [rangeStart, setRangeStart] = useState(() => searchParams.get("occurredOn") ?? "");
+  const [rangeEnd, setRangeEnd] = useState(() => searchParams.get("occurredOn") ?? "");
+  const hasRange = Boolean(rangeStart && rangeEnd);
+
+  const fetchRange = hasRange ? { start: rangeStart, end: rangeEnd } : monthRange(month);
+  const { transactions } = useTransactionsInRange(householdId, fetchRange.start, fetchRange.end);
+
+  function setDateRange(start: string, end: string) {
+    setRangeStart(start);
+    setRangeEnd(end);
+    setSelectedDay(null);
+    if (!start || !end) return;
+    if (view === "calendar") setView("list");
+  }
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -175,23 +196,36 @@ export default function TransactionsPage() {
         <h1 className="text-lg font-bold text-foreground">
           거래내역
         </h1>
-        <div className="flex items-center gap-1">
+        {hasRange ? (
           <button
-            onClick={() => updateParams({ month: shiftMonth(month, -1) })}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-hover"
+            type="button"
+            onClick={() => setDateRange("", "")}
+            className="flex items-center gap-1 rounded-full border border-primary bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary"
           >
-            <ChevronLeft size={18} />
+            {rangeStart === rangeEnd
+              ? formatDateLabel(rangeStart)
+              : `${formatDateLabel(rangeStart)} ~ ${formatDateLabel(rangeEnd)}`}
+            <X size={12} />
           </button>
-          <span className="min-w-[92px] text-center text-sm font-semibold text-foreground">
-            {monthLabel}
-          </span>
-          <button
-            onClick={() => updateParams({ month: shiftMonth(month, 1) })}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-hover"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => updateParams({ month: shiftMonth(month, -1) })}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-hover"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="min-w-[92px] text-center text-sm font-semibold text-foreground">
+              {monthLabel}
+            </span>
+            <button
+              onClick={() => updateParams({ month: shiftMonth(month, 1) })}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-hover"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative mb-3">
@@ -221,6 +255,7 @@ export default function TransactionsPage() {
           selected={paymentMethodFilterIds}
           onChange={setPaymentMethodFilterIds}
         />
+        <DateRangeDropdown startDate={rangeStart} endDate={rangeEnd} onChange={setDateRange} />
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -239,24 +274,26 @@ export default function TransactionsPage() {
             </button>
           ))}
         </div>
-        <div className="flex gap-1 rounded-lg border border-border bg-surface p-1">
-          <button
-            onClick={() => setView("list")}
-            className={`flex h-6 w-6 items-center justify-center rounded transition ${
-              view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            <List size={13} />
-          </button>
-          <button
-            onClick={() => setView("calendar")}
-            className={`flex h-6 w-6 items-center justify-center rounded transition ${
-              view === "calendar" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            <CalendarDays size={13} />
-          </button>
-        </div>
+        {!hasRange && (
+          <div className="flex gap-1 rounded-lg border border-border bg-surface p-1">
+            <button
+              onClick={() => setView("list")}
+              className={`flex h-6 w-6 items-center justify-center rounded transition ${
+                view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <List size={13} />
+            </button>
+            <button
+              onClick={() => setView("calendar")}
+              className={`flex h-6 w-6 items-center justify-center rounded transition ${
+                view === "calendar" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <CalendarDays size={13} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div
@@ -278,7 +315,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {view === "calendar" ? (
+      {view === "calendar" && !hasRange ? (
         <div className="flex flex-col gap-4">
           <div className={`${cardClass} p-3`}>
             <CalendarView
@@ -314,7 +351,7 @@ export default function TransactionsPage() {
       ) : filtered.length === 0 ? (
         <div className={`${cardClass} px-5 py-16 text-center`}>
           <p className="text-sm text-subtle-foreground">
-            이 달에는 거래 내역이 없어요
+            {hasRange ? "선택한 기간에는 거래 내역이 없어요" : "이 달에는 거래 내역이 없어요"}
           </p>
           <Link
             href="/transactions/new"
