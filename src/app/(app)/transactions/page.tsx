@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactionsInRange } from "@/hooks/useMonthTransactions";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import {
   currentMonthStr,
   formatDateLabel,
@@ -84,7 +85,12 @@ export default function TransactionsPage() {
   const fetchRange = hasRange
     ? { start: rangeStart, end: rangeEnd }
     : monthRange(month, fiscalStartDay);
-  const { transactions } = useTransactionsInRange(householdId, fetchRange.start, fetchRange.end);
+  const { transactions, loading } = useTransactionsInRange(
+    householdId,
+    fetchRange.start,
+    fetchRange.end,
+  );
+  useScrollRestoration(`transactions-scroll:${searchParams.toString()}`, !loading);
 
   function setDateRange(start: string, end: string) {
     setRangeStart(start);
