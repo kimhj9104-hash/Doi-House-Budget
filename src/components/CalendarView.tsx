@@ -1,34 +1,39 @@
 "use client";
 
 import { useMemo } from "react";
-import { formatWon } from "@/lib/format";
+import { dateToISO, formatWon } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-function buildGrid(monthStr: string): (number | null)[] {
-  const [y, m] = monthStr.split("-").map(Number);
-  const startWeekday = new Date(y, m - 1, 1).getDay();
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const cells: (number | null)[] = [];
+function buildGrid(startDate: string, endDate: string): (string | null)[] {
+  const start = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+  const startWeekday = start.getDay();
+  const cells: (string | null)[] = [];
   for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  for (const cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
+    cells.push(dateToISO(cur));
+  }
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 }
 
 export default function CalendarView({
-  month,
+  startDate,
+  endDate,
   transactions,
   selectedDay,
   onSelectDay,
 }: {
-  month: string;
+  startDate: string;
+  endDate: string;
   transactions: Transaction[];
   selectedDay: string | null;
   onSelectDay: (dateStr: string) => void;
 }) {
-  const cells = useMemo(() => buildGrid(month), [month]);
+  const cells = useMemo(() => buildGrid(startDate, endDate), [startDate, endDate]);
+  const firstDateIndex = useMemo(() => cells.findIndex((c) => c !== null), [cells]);
 
   const dailyTotals = useMemo(() => {
     const map = new Map<string, { income: number; expense: number }>();
@@ -52,9 +57,10 @@ export default function CalendarView({
             {w}
           </div>
         ))}
-        {cells.map((day, i) => {
-          if (day === null) return <div key={i} />;
-          const dateStr = `${month}-${String(day).padStart(2, "0")}`;
+        {cells.map((dateStr, i) => {
+          if (dateStr === null) return <div key={i} />;
+          const [, mo, da] = dateStr.split("-").map(Number);
+          const dayLabel = da === 1 || i === firstDateIndex ? `${mo}/${da}` : `${da}`;
           const totals = dailyTotals.get(dateStr);
           const isSelected = selectedDay === dateStr;
           const isToday = dateStr === todayStr;
@@ -68,7 +74,9 @@ export default function CalendarView({
               }`}
             >
               <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-semibold ${
+                  dayLabel.length > 2 ? "text-[9px]" : "text-[11px]"
+                } ${
                   isToday
                     ? "bg-primary text-primary-foreground"
                     : isSelected
@@ -76,7 +84,7 @@ export default function CalendarView({
                       : "text-foreground"
                 }`}
               >
-                {day}
+                {dayLabel}
               </span>
               <span className="flex flex-col gap-0.5">
                 {totals?.expense ? (

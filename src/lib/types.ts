@@ -5,6 +5,7 @@ export type Household = {
   name: string;
   inviteCode: string;
   createdAt: number;
+  fiscalStartDay?: number;
 };
 
 export type HouseholdMember = {

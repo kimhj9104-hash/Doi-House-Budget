@@ -6,13 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMonthTransactions } from "@/hooks/useMonthTransactions";
-import { currentMonthStr, formatSignedWon, formatWon, shiftMonth } from "@/lib/format";
+import {
+  currentMonthStr,
+  dateToISO,
+  formatDateShort,
+  formatSignedWon,
+  formatWon,
+  monthRange,
+  shiftMonth,
+} from "@/lib/format";
 import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
-import ExpenseDonutChart, { type CategorySlice } from "@/components/ExpenseDonutChart";
-import PaymentMethodBarChart, {
-  type PaymentMethodSlice,
-} from "@/components/PaymentMethodBarChart";
+import RankedBarChart, { type RankedSlice } from "@/components/RankedBarChart";
 import DailyExpenseBarChart, {
   type DailyExpensePoint,
 } from "@/components/DailyExpenseBarChart";
@@ -20,9 +25,10 @@ import DailyExpenseBarChart, {
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { householdId, categories, paymentMethods } = useAuth();
-  const month = searchParams.get("month") ?? currentMonthStr();
-  const { transactions } = useMonthTransactions(householdId, month);
+  const { householdId, household, categories, paymentMethods } = useAuth();
+  const fiscalStartDay = household?.fiscalStartDay ?? 1;
+  const month = searchParams.get("month") ?? currentMonthStr(fiscalStartDay);
+  const { transactions } = useMonthTransactions(householdId, month, fiscalStartDay);
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -42,7 +48,7 @@ export default function DashboardPage() {
   const balance = income - expense;
 
   const chartData = useMemo(() => {
-    const map = new Map<string, CategorySlice>();
+    const map = new Map<string, RankedSlice>();
     for (const t of transactions) {
       if (t.type !== "expense") continue;
       const cat = t.categoryId ? categoryMap.get(t.categoryId) : null;
@@ -57,7 +63,7 @@ export default function DashboardPage() {
   }, [transactions, categoryMap]);
 
   const paymentMethodData = useMemo(() => {
-    const map = new Map<string, PaymentMethodSlice>();
+    const map = new Map<string, RankedSlice>();
     for (const t of transactions) {
       if (t.type !== "expense") continue;
       const method = t.paymentMethodId ? paymentMethodMap.get(t.paymentMethodId) : null;
@@ -76,25 +82,35 @@ export default function DashboardPage() {
     router.push(`/transactions?${params.toString()}`);
   }
 
-  function goToDayTransactions(day: number) {
-    const occurredOn = `${month}-${String(day).padStart(2, "0")}`;
+  function goToDayTransactions(occurredOn: string) {
     const params = new URLSearchParams({ month, filter: "expense", occurredOn });
     router.push(`/transactions?${params.toString()}`);
   }
 
   const [y, m] = month.split("-").map(Number);
   const monthLabel = `${y}년 ${m}월`;
+  const fiscalRange = useMemo(() => monthRange(month, fiscalStartDay), [month, fiscalStartDay]);
 
   const dailyExpenseData = useMemo<DailyExpensePoint[]>(() => {
-    const daysInMonth = new Date(y, m, 0).getDate();
-    const totals = new Array(daysInMonth).fill(0);
+    const totalsByDate = new Map<string, number>();
     for (const t of transactions) {
       if (t.type !== "expense") continue;
-      const day = Number(t.occurredOn.slice(8, 10));
-      if (day >= 1 && day <= daysInMonth) totals[day - 1] += Number(t.amount);
+      totalsByDate.set(t.occurredOn, (totalsByDate.get(t.occurredOn) ?? 0) + Number(t.amount));
     }
-    return totals.map((value, i) => ({ day: i + 1, value }));
-  }, [transactions, y, m]);
+    const start = new Date(fiscalRange.start + "T00:00:00");
+    const end = new Date(fiscalRange.end + "T00:00:00");
+    const points: DailyExpensePoint[] = [];
+    for (const cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
+      const date = dateToISO(cur);
+      const day = cur.getDate();
+      points.push({
+        date,
+        label: day === 1 ? `${cur.getMonth() + 1}/${day}` : `${day}`,
+        value: totalsByDate.get(date) ?? 0,
+      });
+    }
+    return points;
+  }, [transactions, fiscalRange]);
   const recent = transactions.slice(0, 8);
 
   function goToMonth(next: string) {
@@ -126,6 +142,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {fiscalStartDay !== 1 && (
+        <p className="-mt-3 mb-4 text-right text-xs text-subtle-foreground">
+          {formatDateShort(fiscalRange.start)} ~ {formatDateShort(fiscalRange.end)}
+        </p>
+      )}
+
       <div
         className={`${cardClass} grid grid-cols-1 divide-y divide-border`}
       >
@@ -153,40 +175,20 @@ export default function DashboardPage() {
         <h2 className="mb-2 text-sm font-bold text-foreground">
           카테고리별 지출
         </h2>
-        <ExpenseDonutChart
+        <RankedBarChart
           data={chartData}
           total={expense}
-          onSliceClick={(id) => goToFilteredTransactions("categoryId", id)}
+          onBarClick={(id) => goToFilteredTransactions("categoryId", id)}
         />
-        {chartData.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-            {chartData.slice(0, 6).map((slice) => (
-              <button
-                key={slice.id}
-                type="button"
-                onClick={() => goToFilteredTransactions("categoryId", slice.id)}
-                className="flex items-center gap-2 rounded-lg text-xs transition hover:bg-surface-hover"
-              >
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: slice.color }}
-                />
-                <span className="truncate text-muted-foreground">{slice.name}</span>
-                <span className="ml-auto shrink-0 font-semibold text-foreground">
-                  {formatWon(slice.value)}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className={`${cardClass} mt-4 p-5`}>
         <h2 className="mb-2 text-sm font-bold text-foreground">
           결제수단별 지출
         </h2>
-        <PaymentMethodBarChart
+        <RankedBarChart
           data={paymentMethodData}
+          total={expense}
           onBarClick={(id) => goToFilteredTransactions("paymentMethodId", id)}
         />
       </div>

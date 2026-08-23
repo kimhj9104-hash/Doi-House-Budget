@@ -7,7 +7,7 @@ import { ChevronRight, CreditCard, LogOut, Repeat, Tags, Users } from "lucide-re
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { renameHousehold } from "@/lib/data/household";
+import { renameHousehold, updateFiscalStartDay } from "@/lib/data/household";
 import { cardClass } from "@/lib/ui";
 import InviteCodeCard from "@/components/InviteCodeCard";
 
@@ -16,6 +16,8 @@ export default function SettingsPage() {
   const { user, household, householdId, members } = useAuth();
   const [name, setName] = useState(household?.name ?? "");
   const [saving, setSaving] = useState(false);
+  const [fiscalStartDay, setFiscalStartDay] = useState(household?.fiscalStartDay ?? 1);
+  const [savingFiscalDay, setSavingFiscalDay] = useState(false);
 
   async function handleRename(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +25,14 @@ export default function SettingsPage() {
     setSaving(true);
     await renameHousehold(householdId, name.trim());
     setSaving(false);
+  }
+
+  async function handleSaveFiscalStartDay(e: React.FormEvent) {
+    e.preventDefault();
+    if (!householdId) return;
+    setSavingFiscalDay(true);
+    await updateFiscalStartDay(householdId, fiscalStartDay);
+    setSavingFiscalDay(false);
   }
 
   async function handleSignOut() {
@@ -48,6 +58,34 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+          >
+            저장
+          </button>
+        </form>
+      </div>
+
+      <div className={`${cardClass} mb-4 p-5`}>
+        <h2 className="mb-1 text-sm font-bold text-foreground">회계 월 시작일</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          대시보드와 거래내역의 &quot;월&quot;이 시작되는 날짜를 설정해요. 예를 들어 25일로
+          설정하면 8월 25일부터 9월 24일까지가 &quot;8월&quot;로 표시돼요.
+        </p>
+        <form onSubmit={handleSaveFiscalStartDay} className="flex gap-2">
+          <select
+            value={fiscalStartDay}
+            onChange={(e) => setFiscalStartDay(Number(e.target.value))}
+            className="flex-1 rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
+          >
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+              <option key={day} value={day}>
+                {day === 1 ? "1일 (매월 1일 시작)" : `${day}일`}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            disabled={savingFiscalDay}
             className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
           >
             저장

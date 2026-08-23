@@ -113,3 +113,8 @@ export async function joinHouseholdByCode(
 export async function renameHousehold(householdId: string, name: string) {
   await updateDoc(doc(db, "households", householdId), { name });
 }
+
+export async function updateFiscalStartDay(householdId: string, fiscalStartDay: number) {
+  const day = Math.min(Math.max(Math.round(fiscalStartDay) || 1, 1), 28);
+  await updateDoc(doc(db, "households", householdId), { fiscalStartDay: day });
+}

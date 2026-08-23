@@ -51,7 +51,11 @@ export function useTransactionsInRange(
   return { transactions, loading, error };
 }
 
-export function useMonthTransactions(householdId: string | null, month: string) {
-  const { start, end } = monthRange(month);
+export function useMonthTransactions(
+  householdId: string | null,
+  month: string,
+  fiscalStartDay = 1,
+) {
+  const { start, end } = monthRange(month, fiscalStartDay);
   return useTransactionsInRange(householdId, start, end);
 }

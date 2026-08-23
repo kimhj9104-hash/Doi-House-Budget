@@ -62,8 +62,9 @@ function TransactionRow({
 export default function TransactionsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { householdId, categories, paymentMethods } = useAuth();
-  const month = searchParams.get("month") ?? currentMonthStr();
+  const { householdId, household, categories, paymentMethods } = useAuth();
+  const fiscalStartDay = household?.fiscalStartDay ?? 1;
+  const month = searchParams.get("month") ?? currentMonthStr(fiscalStartDay);
   const filter = (searchParams.get("filter") ?? "all") as "all" | TransactionType;
   const [view, setView] = useState<"list" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -80,7 +81,9 @@ export default function TransactionsPage() {
   const [rangeEnd, setRangeEnd] = useState(() => searchParams.get("occurredOn") ?? "");
   const hasRange = Boolean(rangeStart && rangeEnd);
 
-  const fetchRange = hasRange ? { start: rangeStart, end: rangeEnd } : monthRange(month);
+  const fetchRange = hasRange
+    ? { start: rangeStart, end: rangeEnd }
+    : monthRange(month, fiscalStartDay);
   const { transactions } = useTransactionsInRange(householdId, fetchRange.start, fetchRange.end);
 
   function setDateRange(start: string, end: string) {
@@ -164,7 +167,15 @@ export default function TransactionsPage() {
       list.push(t);
       map.set(t.occurredOn, list);
     }
-    return [...map.entries()];
+    return [...map.entries()].map(([date, items]) => {
+      const dayIncome = items
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      const dayExpense = items
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      return { date, items, dayIncome, dayExpense };
+    });
   }, [filtered]);
 
   const dayTransactions = selectedDay
@@ -230,6 +241,12 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+
+      {!hasRange && fiscalStartDay !== 1 && (
+        <p className="-mt-2 mb-3 text-xs text-subtle-foreground">
+          {formatDateShort(fetchRange.start)} ~ {formatDateShort(fetchRange.end)}
+        </p>
+      )}
 
       <div className="relative mb-3">
         <Search
@@ -328,7 +345,8 @@ export default function TransactionsPage() {
         <div className="flex flex-col gap-4">
           <div className={`${cardClass} p-3`}>
             <CalendarView
-              month={month}
+              startDate={fetchRange.start}
+              endDate={fetchRange.end}
               transactions={filtered}
               selectedDay={selectedDay}
               onSelectDay={(d) => setSelectedDay(d === selectedDay ? null : d)}
@@ -371,11 +389,21 @@ export default function TransactionsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {groups.map(([date, items]) => (
+          {groups.map(({ date, items, dayIncome, dayExpense }) => (
             <div key={date}>
-              <p className="mb-1.5 px-1 text-xs font-semibold text-muted-foreground">
-                {formatDateLabel(date)}
-              </p>
+              <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {formatDateLabel(date)}
+                </p>
+                <p className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
+                  {dayIncome > 0 && (
+                    <span className="text-income">+{formatWon(dayIncome)}</span>
+                  )}
+                  {dayExpense > 0 && (
+                    <span className="text-expense">-{formatWon(dayExpense)}</span>
+                  )}
+                </p>
+              </div>
               <div className={`${cardClass} divide-y divide-border`}>
                 {items.map((t) => (
                   <TransactionRow

@@ -1,10 +1,11 @@
 "use client";
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { formatWon } from "@/lib/format";
+import { formatCompactWon, formatDateShort, formatWon } from "@/lib/format";
 
 export type DailyExpensePoint = {
-  day: number;
+  date: string;
+  label: string;
   value: number;
 };
 
@@ -13,7 +14,7 @@ export default function DailyExpenseBarChart({
   onBarClick,
 }: {
   data: DailyExpensePoint[];
-  onBarClick?: (day: number) => void;
+  onBarClick?: (date: string) => void;
 }) {
   const hasData = data.some((d) => d.value > 0);
   if (!hasData) {
@@ -24,20 +25,31 @@ export default function DailyExpenseBarChart({
     );
   }
 
+  const interval = Math.max(0, Math.ceil(data.length / 8) - 1);
+
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <XAxis
-            dataKey="day"
+            dataKey="label"
             axisLine={false}
             tickLine={false}
-            interval={4}
+            interval={interval}
             tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
           />
-          <YAxis hide />
+          <YAxis
+            width={48}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => formatCompactWon(Number(v))}
+            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+          />
           <Tooltip
-            labelFormatter={(day) => `${day}일`}
+            labelFormatter={(_, payload) => {
+              const point = payload?.[0]?.payload as DailyExpensePoint | undefined;
+              return point ? formatDateShort(point.date) : "";
+            }}
             formatter={(value) => formatWon(Number(value))}
             contentStyle={{
               borderRadius: 12,
@@ -52,8 +64,8 @@ export default function DailyExpenseBarChart({
             onClick={
               onBarClick
                 ? (entry) => {
-                    const day = (entry.payload as DailyExpensePoint | undefined)?.day;
-                    if (day) onBarClick(day);
+                    const date = (entry.payload as DailyExpensePoint | undefined)?.date;
+                    if (date) onBarClick(date);
                   }
                 : undefined
             }
