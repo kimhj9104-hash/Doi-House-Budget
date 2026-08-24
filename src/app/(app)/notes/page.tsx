@@ -54,7 +54,7 @@ function NoteEditForm({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         maxLength={500}
-        rows={4}
+        rows={10}
         className="resize-none rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
       />
       <div className="flex gap-2">
@@ -191,7 +191,7 @@ export default function NotesPage() {
             onChange={(e) => setContent(e.target.value)}
             placeholder="공지사항이나 공유할 내용을 적어보세요"
             maxLength={500}
-            rows={3}
+            rows={8}
             className="resize-none rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary-soft"
           />
           <button
