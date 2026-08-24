@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { dateToISO, formatWon } from "@/lib/format";
+import { dateToISO } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -107,9 +107,6 @@ export default function CalendarView({
 }
 
 function formatCompact(amount: number): string {
-  if (amount >= 10000) {
-    const man = amount / 10000;
-    return `${man % 1 === 0 ? man : man.toFixed(1)}만`;
-  }
-  return formatWon(amount).replace("원", "");
+  const man = amount / 10000;
+  return `${man % 1 === 0 ? man : man.toFixed(1)}만`;
 }
