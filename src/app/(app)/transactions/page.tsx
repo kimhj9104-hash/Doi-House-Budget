@@ -78,6 +78,7 @@ export default function TransactionsPage() {
     const id = searchParams.get("paymentMethodId");
     return id ? [id] : [];
   });
+  const [recurringFilterIds, setRecurringFilterIds] = useState<string[]>([]);
   const [rangeStart, setRangeStart] = useState(() => searchParams.get("occurredOn") ?? "");
   const [rangeEnd, setRangeEnd] = useState(() => searchParams.get("occurredOn") ?? "");
   const hasRange = Boolean(rangeStart && rangeEnd);
@@ -130,6 +131,13 @@ export default function TransactionsPage() {
     ],
     [paymentMethods],
   );
+  const recurringOptions = useMemo(
+    () => [
+      { value: "recurring", label: "고정" },
+      { value: "none", label: "비고정" },
+    ],
+    [],
+  );
 
   const filtered = useMemo(() => {
     let list = filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
@@ -139,6 +147,9 @@ export default function TransactionsPage() {
     }
     if (paymentMethodFilterIds.length > 0) {
       list = list.filter((t) => paymentMethodFilterIds.includes(t.paymentMethodId ?? "none"));
+    }
+    if (recurringFilterIds.length > 0) {
+      list = list.filter((t) => recurringFilterIds.includes(t.recurringId ? "recurring" : "none"));
     }
 
     const q = search.trim().toLowerCase();
@@ -161,6 +172,7 @@ export default function TransactionsPage() {
     filter,
     categoryFilterIds,
     paymentMethodFilterIds,
+    recurringFilterIds,
     search,
     categoryMap,
     paymentMethodMap,
@@ -268,7 +280,7 @@ export default function TransactionsPage() {
         />
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <MultiSelectDropdown
           label="카테고리"
           options={categoryOptions}
@@ -280,6 +292,12 @@ export default function TransactionsPage() {
           options={paymentMethodOptions}
           selected={paymentMethodFilterIds}
           onChange={setPaymentMethodFilterIds}
+        />
+        <MultiSelectDropdown
+          label="고정"
+          options={recurringOptions}
+          selected={recurringFilterIds}
+          onChange={setRecurringFilterIds}
         />
         <DateRangeDropdown startDate={rangeStart} endDate={rangeEnd} onChange={setDateRange} />
       </div>

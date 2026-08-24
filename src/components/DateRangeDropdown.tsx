@@ -36,7 +36,7 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
       ? startDate === endDate
         ? formatDateLabel(startDate)
         : `${formatDateShort(startDate)} ~ ${formatDateShort(endDate)}`
-      : "기간 설정";
+      : "기간";
 
   function applyAndClose() {
     onChange(draftStart, draftEnd);
@@ -51,7 +51,7 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <button
         type="button"
         onClick={() => {
@@ -68,7 +68,7 @@ export default function DateRangeDropdown({ startDate, endDate, onChange }: Prop
             return next;
           });
         }}
-        className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+        className={`flex items-center gap-0.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
           active
             ? "border-primary bg-primary-soft text-primary"
             : "border-border bg-surface text-muted-foreground"

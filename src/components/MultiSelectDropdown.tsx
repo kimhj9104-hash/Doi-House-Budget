@@ -53,18 +53,16 @@ export default function MultiSelectDropdown({ label, options, selected, onChange
   }
 
   const buttonLabel =
-    selected.length === 0
-      ? `${label} 전체`
-      : selected.length === options.length
-        ? `${label} 전체`
-        : `${label} ${selected.length}개`;
+    selected.length === 0 || selected.length === options.length
+      ? label
+      : `${label} ${selected.length}개`;
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <button
         type="button"
         onClick={handleToggle}
-        className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+        className={`flex items-center gap-0.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
           selected.length > 0
             ? "border-primary bg-primary-soft text-primary"
             : "border-border bg-surface text-muted-foreground"
