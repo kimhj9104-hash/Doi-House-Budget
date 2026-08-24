@@ -45,6 +45,16 @@ export default function TransactionForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
+  function returnToList() {
+    // 수정/삭제는 리스트에서 진입한 흐름이므로 back()으로 원래 URL(스크롤 위치 포함)을 유지한다.
+    // 새 거래 추가는 BottomNav 등 여러 화면에서 진입할 수 있어 목록으로 고정 이동한다.
+    if (onDelete) {
+      router.back();
+    } else {
+      router.push("/transactions");
+    }
+  }
+
   const filteredCategories = useMemo(
     () => categories.filter((c) => c.type === type),
     [categories, type],
@@ -78,7 +88,7 @@ export default function TransactionForm({
         memo: memo.trim(),
         note: note.trim(),
       });
-      router.push("/transactions");
+      returnToList();
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장하지 못했어요");
       setPending(false);
@@ -91,7 +101,7 @@ export default function TransactionForm({
     setPending(true);
     try {
       await onDelete();
-      router.push("/transactions");
+      returnToList();
     } catch (err) {
       setError(err instanceof Error ? err.message : "삭제하지 못했어요");
       setPending(false);
