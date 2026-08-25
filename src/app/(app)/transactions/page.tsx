@@ -7,6 +7,8 @@ import { CalendarDays, ChevronLeft, ChevronRight, List, Search, X } from "lucide
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactionsInRange } from "@/hooks/useMonthTransactions";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
+import { useGoogleCalendarIntegration } from "@/hooks/useGoogleCalendarIntegration";
+import { useGoogleCalendarEvents } from "@/hooks/useGoogleCalendarEvents";
 import {
   currentMonthStr,
   formatDateLabel,
@@ -92,6 +94,14 @@ export default function TransactionsPage() {
     fetchRange.end,
   );
   useScrollRestoration(`transactions-scroll:${searchParams.toString()}`, !loading);
+
+  const { integration: googleIntegration } = useGoogleCalendarIntegration(householdId);
+  const { eventsByDay: googleEventsByDay } = useGoogleCalendarEvents(
+    householdId,
+    fetchRange.start,
+    fetchRange.end,
+    Boolean(googleIntegration?.connected),
+  );
 
   function setDateRange(start: string, end: string) {
     setRangeStart(start);
@@ -374,6 +384,7 @@ export default function TransactionsPage() {
               transactions={filtered}
               selectedDay={selectedDay}
               onSelectDay={(d) => setSelectedDay(d === selectedDay ? null : d)}
+              googleEventsByDay={googleEventsByDay}
             />
           </div>
           {selectedDay && (
@@ -396,6 +407,29 @@ export default function TransactionsPage() {
                   ))
                 )}
               </div>
+              {googleIntegration?.connected &&
+                (googleEventsByDay.get(selectedDay)?.length ?? 0) > 0 && (
+                  <div className="mt-3">
+                    <p className="mb-1.5 px-1 text-xs font-semibold text-muted-foreground">
+                      Google 캘린더
+                    </p>
+                    <div className={`${cardClass} divide-y divide-border`}>
+                      {googleEventsByDay.get(selectedDay)!.map((event) => (
+                        <div key={event.id} className="flex items-center gap-3 px-4 py-3">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          <p className="min-w-0 flex-1 truncate text-sm text-foreground">
+                            {event.title}
+                          </p>
+                          {event.time && (
+                            <span className="shrink-0 text-xs text-subtle-foreground">
+                              {event.time}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
           )}
         </div>

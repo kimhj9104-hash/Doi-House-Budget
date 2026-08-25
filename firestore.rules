@@ -56,6 +56,16 @@ service cloud.firestore {
         allow read, update, delete: if isMember(householdId);
         allow create: if isMember(householdId) && request.resource.data.uid == request.auth.uid;
       }
+
+      // 연동 상태 표시용 (예: Google 캘린더 연결 여부). 실제 토큰은 여기 저장하지 않음 —
+      // 서버(Admin SDK)에서만 쓰고, 클라이언트는 상태만 읽을 수 있게 한다.
+      match /integrations/{integrationId} {
+        allow read: if isMember(householdId);
+        allow write: if false;
+      }
     }
+
+    // Google 캘린더 refresh token 저장소. 이 컬렉션은 규칙에 등록하지 않는 것 자체가 보안 조치 —
+    // Firestore 기본 거부 원칙에 의해 클라이언트 SDK는 절대 접근할 수 없고, Admin SDK만 접근한다.
   }
 }

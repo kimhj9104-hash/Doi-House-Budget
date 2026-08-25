@@ -69,3 +69,17 @@ export type RecurringTransaction = {
   createdAt: number;
   sortOrder?: number;
 };
+
+export type GoogleCalendarIntegration = {
+  connected: boolean;
+  connectedByUid?: string;
+  connectedAt?: number;
+  calendarSummary?: string;
+};
+
+export type GoogleCalendarEvent = {
+  id: string;
+  date: string;
+  title: string;
+  time?: string;
+};

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { dateToISO } from "@/lib/format";
-import type { Transaction } from "@/lib/types";
+import type { GoogleCalendarEvent, Transaction } from "@/lib/types";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -25,12 +25,14 @@ export default function CalendarView({
   transactions,
   selectedDay,
   onSelectDay,
+  googleEventsByDay,
 }: {
   startDate: string;
   endDate: string;
   transactions: Transaction[];
   selectedDay: string | null;
   onSelectDay: (dateStr: string) => void;
+  googleEventsByDay?: Map<string, GoogleCalendarEvent[]>;
 }) {
   const cells = useMemo(() => buildGrid(startDate, endDate), [startDate, endDate]);
   const firstDateIndex = useMemo(() => cells.findIndex((c) => c !== null), [cells]);
@@ -64,15 +66,19 @@ export default function CalendarView({
           const totals = dailyTotals.get(dateStr);
           const isSelected = selectedDay === dateStr;
           const isToday = dateStr === todayStr;
+          const hasGoogleEvents = Boolean(googleEventsByDay?.get(dateStr)?.length);
           return (
             <button
               key={i}
               type="button"
               onClick={() => onSelectDay(dateStr)}
-              className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 transition ${
+              className={`relative flex flex-col items-center gap-0.5 rounded-lg py-1.5 transition ${
                 isSelected ? "bg-primary-soft" : "hover:bg-surface-hover"
               }`}
             >
+              {hasGoogleEvents && (
+                <span className="absolute right-1.5 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
               <span
                 className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-semibold ${
                   dayLabel.length > 2 ? "text-[9px]" : "text-[11px]"

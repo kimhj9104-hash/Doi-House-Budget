@@ -1,23 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronRight, CreditCard, LogOut, Repeat, Tags, Users } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CalendarDays, ChevronRight, CreditCard, LogOut, Repeat, Tags, Users } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { renameHousehold, updateFiscalStartDay } from "@/lib/data/household";
+import {
+  disconnectGoogleCalendar,
+  getGoogleCalendarConnectUrl,
+} from "@/lib/data/googleCalendar";
+import { useGoogleCalendarIntegration } from "@/hooks/useGoogleCalendarIntegration";
 import { cardClass } from "@/lib/ui";
 import InviteCodeCard from "@/components/InviteCodeCard";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, household, householdId, members } = useAuth();
   const [name, setName] = useState(household?.name ?? "");
   const [saving, setSaving] = useState(false);
   const [fiscalStartDay, setFiscalStartDay] = useState(household?.fiscalStartDay ?? 1);
   const [savingFiscalDay, setSavingFiscalDay] = useState(false);
+
+  const { integration: googleIntegration } = useGoogleCalendarIntegration(householdId);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleError, setGoogleError] = useState("");
+  const googleCalendarStatus = searchParams.get("googleCalendar");
+
+  useEffect(() => {
+    if (googleCalendarStatus === "error") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- surfaces the ?googleCalendar=error redirect from the OAuth callback route
+      setGoogleError("Google 캘린더 연동에 실패했어요. 다시 시도해주세요");
+    }
+  }, [googleCalendarStatus]);
+
+  async function handleGoogleConnect() {
+    if (!householdId || !user) return;
+    setGoogleError("");
+    setGoogleBusy(true);
+    try {
+      const idToken = await user.getIdToken();
+      const url = await getGoogleCalendarConnectUrl(idToken, householdId);
+      window.location.href = url;
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "연동을 시작하지 못했어요");
+      setGoogleBusy(false);
+    }
+  }
+
+  async function handleGoogleDisconnect() {
+    if (!householdId || !user) return;
+    if (!confirm("Google 캘린더 연동을 해제할까요?")) return;
+    setGoogleError("");
+    setGoogleBusy(true);
+    try {
+      const idToken = await user.getIdToken();
+      await disconnectGoogleCalendar(idToken, householdId);
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "연동 해제에 실패했어요");
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
 
   async function handleRename(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +146,52 @@ export default function SettingsPage() {
           배우자에게 이 코드를 공유하면 같은 가계부에 함께 참여할 수 있어요.
         </p>
         <InviteCodeCard code={household.inviteCode} />
+      </div>
+
+      <div className={`${cardClass} mb-4 p-5`}>
+        <h2 className="mb-1 flex items-center gap-1.5 text-sm font-bold text-foreground">
+          <CalendarDays size={15} />
+          Google 캘린더 연동
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          연동하면 거래내역 캘린더에서 Google 캘린더 일정도 함께 볼 수 있어요.
+        </p>
+        {googleError && (
+          <p className="mb-3 rounded-lg bg-expense-soft px-3 py-2 text-xs font-medium text-expense">
+            {googleError}
+          </p>
+        )}
+        {googleIntegration?.connected ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">
+                연결됨{googleIntegration.calendarSummary ? ` · ${googleIntegration.calendarSummary}` : ""}
+              </p>
+              {googleIntegration.connectedAt && (
+                <p className="text-xs text-subtle-foreground">
+                  {new Date(googleIntegration.connectedAt).toLocaleDateString("ko-KR")} 연결
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleDisconnect}
+              disabled={googleBusy}
+              className="shrink-0 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm font-semibold text-expense transition hover:bg-expense-soft disabled:opacity-60"
+            >
+              연결 해제
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleGoogleConnect}
+            disabled={googleBusy}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
+          >
+            {googleBusy ? "이동 중..." : "Google 캘린더 연결하기"}
+          </button>
+        )}
       </div>
 
       <Link
