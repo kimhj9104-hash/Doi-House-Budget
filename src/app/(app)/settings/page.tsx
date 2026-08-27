@@ -116,7 +116,7 @@ export default function SettingsPage() {
         <h2 className="mb-1 text-sm font-bold text-foreground">회계 월 시작일</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           대시보드와 거래내역의 &quot;월&quot;이 시작되는 날짜를 설정해요. 예를 들어 25일로
-          설정하면 8월 25일부터 9월 24일까지가 &quot;8월&quot;로 표시돼요.
+          설정하면 7월 25일부터 8월 24일까지가 &quot;8월&quot;로 표시돼요.
         </p>
         <form onSubmit={handleSaveFiscalStartDay} className="flex gap-2">
           <select

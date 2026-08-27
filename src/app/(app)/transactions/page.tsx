@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
@@ -30,6 +30,9 @@ const FILTERS: { key: "all" | TransactionType; label: string }[] = [
   { key: "expense", label: "지출" },
   { key: "income", label: "수입" },
 ];
+
+// 거래내역 진입 시 기본으로 선택되는 결제수단 필터 (이름 기준)
+const DEFAULT_PAYMENT_METHOD_NAME = "생활비(카뱅)";
 
 function TransactionRow({
   t,
@@ -80,6 +83,8 @@ export default function TransactionsPage() {
     const id = searchParams.get("paymentMethodId");
     return id ? [id] : [];
   });
+  // URL로 결제수단이 지정되지 않았으면, 결제수단 목록이 로드된 뒤 기본값을 한 번만 적용한다.
+  const defaultPaymentFilterApplied = useRef(Boolean(searchParams.get("paymentMethodId")));
   const [recurringFilterIds, setRecurringFilterIds] = useState<string[]>([]);
   const [rangeStart, setRangeStart] = useState(() => searchParams.get("occurredOn") ?? "");
   const [rangeEnd, setRangeEnd] = useState(() => searchParams.get("occurredOn") ?? "");
@@ -119,6 +124,14 @@ export default function TransactionsPage() {
     () => new Map(paymentMethods.map((m) => [m.id, m])),
     [paymentMethods],
   );
+
+  useEffect(() => {
+    if (defaultPaymentFilterApplied.current) return;
+    if (paymentMethods.length === 0) return;
+    defaultPaymentFilterApplied.current = true;
+    const match = paymentMethods.find((m) => m.name === DEFAULT_PAYMENT_METHOD_NAME);
+    if (match) setPaymentMethodFilterIds([match.id]);
+  }, [paymentMethods]);
 
   const categoryOptions = useMemo(
     () => [

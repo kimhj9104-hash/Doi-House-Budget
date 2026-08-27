@@ -50,8 +50,8 @@ function clampFiscalStartDay(fiscalStartDay: number): number {
 }
 
 // fiscalStartDay가 1이면 달력상의 월(1일~말일)과 동일하다.
-// 1보다 크면 그 날짜에 시작해서 다음 달 같은 날짜 전날에 끝나는 기간을 monthStr(시작월 기준)으로 표현한다.
-// 예: monthStr="2026-08", fiscalStartDay=10 -> 2026-08-10 ~ 2026-09-09
+// 1보다 크면 전달 그 날짜에 시작해서 해당 월 같은 날짜 전날에 끝나는 기간을 monthStr(종료월 기준)으로 표현한다.
+// 예: monthStr="2026-08", fiscalStartDay=25 -> 2026-07-25 ~ 2026-08-24
 export function monthRange(
   monthStr: string,
   fiscalStartDay = 1,
@@ -64,8 +64,8 @@ export function monthRange(
     const end = `${monthStr}-${String(lastDay).padStart(2, "0")}`;
     return { start, end };
   }
-  const start = `${monthStr}-${String(startDay).padStart(2, "0")}`;
-  const end = dateToISO(new Date(y, m, startDay - 1));
+  const start = dateToISO(new Date(y, m - 2, startDay));
+  const end = dateToISO(new Date(y, m - 1, startDay - 1));
   return { start, end };
 }
 
@@ -74,11 +74,12 @@ export function currentMonthStr(fiscalStartDay = 1): string {
   const today = new Date();
   let y = today.getFullYear();
   let m = today.getMonth() + 1;
-  if (today.getDate() < startDay) {
-    m -= 1;
-    if (m === 0) {
-      m = 12;
-      y -= 1;
+  // 종료월 기준이므로, 시작일 이후면 다음 달 이름의 회계월에 속한다.
+  if (startDay > 1 && today.getDate() >= startDay) {
+    m += 1;
+    if (m === 13) {
+      m = 1;
+      y += 1;
     }
   }
   return `${y}-${String(m).padStart(2, "0")}`;
