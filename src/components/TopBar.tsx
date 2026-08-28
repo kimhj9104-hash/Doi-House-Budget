@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Wallet2 } from "lucide-react";
 
 export default function TopBar({ householdName }: { householdName: string }) {
@@ -13,12 +12,6 @@ export default function TopBar({ householdName }: { householdName: string }) {
       <p className="truncate text-[15px] font-bold text-foreground">
         {householdName}
       </p>
-      <Link
-        href="/settings"
-        className="ml-auto text-xs font-medium text-muted-foreground"
-      >
-        설정
-      </Link>
     </header>
   );
 }
