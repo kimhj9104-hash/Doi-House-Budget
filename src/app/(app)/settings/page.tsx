@@ -148,6 +148,48 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl px-4 py-5">
       <h1 className="mb-5 text-lg font-bold text-foreground">설정</h1>
 
+      <Link
+        href="/categories"
+        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
+      >
+        <Tags size={17} className="text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">카테고리 관리</p>
+          <p className="text-xs text-muted-foreground">
+            거래 등록 시 고를 지출/수입 카테고리를 관리해요
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-subtle-foreground" />
+      </Link>
+
+      <Link
+        href="/payment-methods"
+        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
+      >
+        <CreditCard size={17} className="text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">결제수단 관리</p>
+          <p className="text-xs text-muted-foreground">
+            카드/현금/계좌이체 등 거래 등록 시 고를 결제수단을 관리해요
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-subtle-foreground" />
+      </Link>
+
+      <Link
+        href="/recurring"
+        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
+      >
+        <Repeat size={17} className="text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">고정 수입/지출 관리</p>
+          <p className="text-xs text-muted-foreground">
+            매달 반복되는 월급, 월세, 구독료를 등록해두면 자동으로 추가돼요
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-subtle-foreground" />
+      </Link>
+
       <div className={`${cardClass} mb-4 p-5`}>
         <h2 className="mb-3 text-sm font-bold text-foreground">가구 이름</h2>
         <form onSubmit={handleRename} className="flex gap-2">
@@ -315,48 +357,6 @@ export default function SettingsPage() {
           </button>
         )}
       </div>
-
-      <Link
-        href="/recurring"
-        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
-      >
-        <Repeat size={17} className="text-primary" />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">고정 수입/지출 관리</p>
-          <p className="text-xs text-muted-foreground">
-            매달 반복되는 월급, 월세, 구독료를 등록해두면 자동으로 추가돼요
-          </p>
-        </div>
-        <ChevronRight size={16} className="text-subtle-foreground" />
-      </Link>
-
-      <Link
-        href="/payment-methods"
-        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
-      >
-        <CreditCard size={17} className="text-primary" />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">결제수단 관리</p>
-          <p className="text-xs text-muted-foreground">
-            카드/현금/계좌이체 등 거래 등록 시 고를 결제수단을 관리해요
-          </p>
-        </div>
-        <ChevronRight size={16} className="text-subtle-foreground" />
-      </Link>
-
-      <Link
-        href="/categories"
-        className={`${cardClass} mb-4 flex items-center gap-3 p-5 transition hover:bg-surface-hover`}
-      >
-        <Tags size={17} className="text-primary" />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">카테고리 관리</p>
-          <p className="text-xs text-muted-foreground">
-            거래 등록 시 고를 지출/수입 카테고리를 관리해요
-          </p>
-        </div>
-        <ChevronRight size={16} className="text-subtle-foreground" />
-      </Link>
 
       <div className={`${cardClass} mb-4 p-5`}>
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-foreground">
