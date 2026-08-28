@@ -6,6 +6,9 @@ export type Household = {
   inviteCode: string;
   createdAt: number;
   fiscalStartDay?: number;
+  // 사용자가 설정 화면에서 올린 앱 아이콘 (512x512 정사각형 PNG/JPEG data URL)
+  appIconDataUrl?: string;
+  appIconUpdatedAt?: number;
 };
 
 export type HouseholdMember = {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AppShell from "@/components/AppShell";
+import DynamicAppIcon from "@/components/DynamicAppIcon";
 
 export default function AppGroupLayout({
   children,
@@ -44,5 +45,10 @@ export default function AppGroupLayout({
     );
   }
 
-  return <AppShell householdName={household.name}>{children}</AppShell>;
+  return (
+    <>
+      <DynamicAppIcon />
+      <AppShell householdName={household.name}>{children}</AppShell>
+    </>
+  );
 }

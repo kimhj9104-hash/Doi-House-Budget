@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronRight, CreditCard, LogOut, Repeat, Tags, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, CreditCard, Image as ImageIcon, LogOut, Repeat, Tags, Users } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { renameHousehold, updateFiscalStartDay } from "@/lib/data/household";
+import {
+  clearAppIcon,
+  renameHousehold,
+  updateAppIcon,
+  updateFiscalStartDay,
+} from "@/lib/data/household";
+import { fileToAppIconDataUrl } from "@/lib/appIcon";
 import {
   disconnectGoogleCalendar,
   getGoogleCalendarConnectUrl,
@@ -24,6 +30,11 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [fiscalStartDay, setFiscalStartDay] = useState(household?.fiscalStartDay ?? 1);
   const [savingFiscalDay, setSavingFiscalDay] = useState(false);
+
+  const iconFileRef = useRef<HTMLInputElement>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconBusy, setIconBusy] = useState(false);
+  const [iconError, setIconError] = useState("");
 
   const { integration: googleIntegration } = useGoogleCalendarIntegration(householdId);
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -82,6 +93,50 @@ export default function SettingsPage() {
     setSavingFiscalDay(false);
   }
 
+  async function handleIconFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setIconError("");
+    setIconBusy(true);
+    try {
+      setIconPreview(await fileToAppIconDataUrl(file));
+    } catch (err) {
+      setIconError(err instanceof Error ? err.message : "이미지를 불러오지 못했어요");
+    } finally {
+      setIconBusy(false);
+    }
+  }
+
+  async function handleIconSave() {
+    if (!householdId || !iconPreview) return;
+    setIconError("");
+    setIconBusy(true);
+    try {
+      await updateAppIcon(householdId, iconPreview);
+      setIconPreview(null);
+    } catch (err) {
+      setIconError(err instanceof Error ? err.message : "저장에 실패했어요");
+    } finally {
+      setIconBusy(false);
+    }
+  }
+
+  async function handleIconReset() {
+    if (!householdId) return;
+    if (!confirm("앱 아이콘을 기본값으로 되돌릴까요?")) return;
+    setIconError("");
+    setIconBusy(true);
+    try {
+      await clearAppIcon(householdId);
+      setIconPreview(null);
+    } catch (err) {
+      setIconError(err instanceof Error ? err.message : "되돌리기에 실패했어요");
+    } finally {
+      setIconBusy(false);
+    }
+  }
+
   async function handleSignOut() {
     await signOut(auth);
     router.push("/login");
@@ -138,6 +193,73 @@ export default function SettingsPage() {
             저장
           </button>
         </form>
+      </div>
+
+      <div className={`${cardClass} mb-4 p-5`}>
+        <h2 className="mb-1 flex items-center gap-1.5 text-sm font-bold text-foreground">
+          <ImageIcon size={15} />
+          앱 아이콘
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          브라우저 탭과 홈 화면에 표시되는 아이콘이에요. 정사각형이 아니면 가운데를 기준으로
+          잘려요. 저장하면 브라우저 탭 아이콘은 바로 바뀌고, 홈 화면에 설치한 앱 아이콘은
+          재배포 후 앱을 지웠다 다시 추가해야 반영돼요.
+        </p>
+        {iconError && (
+          <p className="mb-3 rounded-lg bg-expense-soft px-3 py-2 text-xs font-medium text-expense">
+            {iconError}
+          </p>
+        )}
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={iconPreview ?? household.appIconDataUrl ?? "/icons/icon.svg"}
+            alt="앱 아이콘 미리보기"
+            className="h-16 w-16 shrink-0 rounded-2xl border border-border object-cover"
+          />
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={iconFileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleIconFile}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => iconFileRef.current?.click()}
+              disabled={iconBusy}
+              className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface-hover disabled:opacity-60"
+            >
+              {iconBusy ? "처리 중..." : "이미지 선택"}
+            </button>
+            {iconPreview && (
+              <button
+                type="button"
+                onClick={handleIconSave}
+                disabled={iconBusy}
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
+              >
+                저장
+              </button>
+            )}
+            {!iconPreview && household.appIconDataUrl && (
+              <button
+                type="button"
+                onClick={handleIconReset}
+                disabled={iconBusy}
+                className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm font-semibold text-expense transition hover:bg-expense-soft disabled:opacity-60"
+              >
+                기본값으로
+              </button>
+            )}
+          </div>
+        </div>
+        {iconPreview && (
+          <p className="mt-2 text-xs text-subtle-foreground">
+            미리보기예요. &quot;저장&quot;을 눌러야 적용돼요.
+          </p>
+        )}
       </div>
 
       <div className={`${cardClass} mb-4 p-5`}>

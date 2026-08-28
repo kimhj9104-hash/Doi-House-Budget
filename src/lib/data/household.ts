@@ -4,6 +4,7 @@ import {
   writeBatch,
   getDoc,
   updateDoc,
+  deleteField,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -117,4 +118,18 @@ export async function renameHousehold(householdId: string, name: string) {
 export async function updateFiscalStartDay(householdId: string, fiscalStartDay: number) {
   const day = Math.min(Math.max(Math.round(fiscalStartDay) || 1, 1), 28);
   await updateDoc(doc(db, "households", householdId), { fiscalStartDay: day });
+}
+
+export async function updateAppIcon(householdId: string, dataUrl: string) {
+  await updateDoc(doc(db, "households", householdId), {
+    appIconDataUrl: dataUrl,
+    appIconUpdatedAt: Date.now(),
+  });
+}
+
+export async function clearAppIcon(householdId: string) {
+  await updateDoc(doc(db, "households", householdId), {
+    appIconDataUrl: deleteField(),
+    appIconUpdatedAt: deleteField(),
+  });
 }
