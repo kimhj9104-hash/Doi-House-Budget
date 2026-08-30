@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import CategoryIcon from "./CategoryIcon";
+import AmountField from "./AmountField";
+import { resolveAmount } from "@/lib/calc";
 import type { Category, PaymentMethod, TransactionType } from "@/lib/types";
 import type { RecurringInput } from "@/lib/data/recurring";
 
@@ -56,14 +58,9 @@ export default function RecurringForm({
     [categories, type],
   );
 
-  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const digits = e.target.value.replace(/[^0-9]/g, "");
-    setAmountDisplay(digits);
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const amount = Number(amountDisplay);
+    const amount = resolveAmount(amountDisplay);
     if (!name.trim()) {
       setError("이름을 입력해주세요");
       return;
@@ -175,19 +172,7 @@ export default function RecurringForm({
           <span className="text-xs font-semibold text-muted-foreground">
             금액
           </span>
-          <div className="flex items-center rounded-xl border border-border-strong bg-white px-3.5 py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-soft">
-            <input
-              inputMode="numeric"
-              placeholder="0"
-              value={amountDisplay ? Number(amountDisplay).toLocaleString("ko-KR") : ""}
-              onChange={handleAmountChange}
-              required
-              className="w-full bg-transparent text-lg font-bold text-foreground outline-none"
-            />
-            <span className="ml-2 shrink-0 text-sm font-semibold text-muted-foreground">
-              원
-            </span>
-          </div>
+          <AmountField value={amountDisplay} onChange={setAmountDisplay} />
         </label>
 
         <div className="flex flex-col gap-1.5">
