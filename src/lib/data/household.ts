@@ -124,6 +124,8 @@ export async function updateAppIcon(householdId: string, dataUrl: string) {
   await updateDoc(doc(db, "households", householdId), {
     appIconDataUrl: dataUrl,
     appIconUpdatedAt: Date.now(),
+    // 매번 새 토큰을 발급해 이전 매니페스트 URL의 캐시를 무효화한다.
+    appIconToken: crypto.randomUUID().replace(/-/g, ""),
   });
 }
 
@@ -131,5 +133,6 @@ export async function clearAppIcon(householdId: string) {
   await updateDoc(doc(db, "households", householdId), {
     appIconDataUrl: deleteField(),
     appIconUpdatedAt: deleteField(),
+    appIconToken: deleteField(),
   });
 }

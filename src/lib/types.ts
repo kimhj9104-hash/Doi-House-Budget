@@ -9,6 +9,8 @@ export type Household = {
   // 사용자가 설정 화면에서 올린 앱 아이콘 (512x512 정사각형 PNG/JPEG data URL)
   appIconDataUrl?: string;
   appIconUpdatedAt?: number;
+  // 공개 매니페스트/아이콘 엔드포인트 URL에 쓰는 추측 불가능한 키 (아이콘 저장 시 발급)
+  appIconToken?: string;
 };
 
 export type HouseholdMember = {
