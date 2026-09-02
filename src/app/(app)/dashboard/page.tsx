@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/format";
 import { cardClass } from "@/lib/ui";
 import CategoryIcon from "@/components/CategoryIcon";
+import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import RankedBarChart, { type RankedSlice } from "@/components/RankedBarChart";
 import DailyExpenseBarChart, {
   type DailyExpensePoint,
@@ -28,7 +29,14 @@ export default function DashboardPage() {
   const { householdId, household, categories, paymentMethods } = useAuth();
   const fiscalStartDay = household?.fiscalStartDay ?? 1;
   const month = searchParams.get("month") ?? currentMonthStr(fiscalStartDay);
-  const { transactions } = useMonthTransactions(householdId, month, fiscalStartDay);
+  const { transactions: allTransactions } = useMonthTransactions(
+    householdId,
+    month,
+    fiscalStartDay,
+  );
+
+  const [paymentMethodFilterIds, setPaymentMethodFilterIds] = useState<string[]>([]);
+  const [recurringFilterIds, setRecurringFilterIds] = useState<string[]>([]);
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -38,6 +46,38 @@ export default function DashboardPage() {
     () => new Map(paymentMethods.map((m) => [m.id, m])),
     [paymentMethods],
   );
+
+  const paymentMethodOptions = useMemo(
+    () => [
+      { value: "none", label: "미지정" },
+      ...[...paymentMethods]
+        .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+        .map((m) => ({ value: m.id, label: m.name })),
+    ],
+    [paymentMethods],
+  );
+  const recurringOptions = useMemo(
+    () => [
+      { value: "recurring", label: "고정" },
+      { value: "none", label: "비고정" },
+    ],
+    [],
+  );
+
+  const transactions = useMemo(() => {
+    let list = allTransactions;
+    if (paymentMethodFilterIds.length > 0) {
+      list = list.filter((t) =>
+        paymentMethodFilterIds.includes(t.paymentMethodId ?? "none"),
+      );
+    }
+    if (recurringFilterIds.length > 0) {
+      list = list.filter((t) =>
+        recurringFilterIds.includes(t.recurringId ? "recurring" : "none"),
+      );
+    }
+    return list;
+  }, [allTransactions, paymentMethodFilterIds, recurringFilterIds]);
 
   const income = transactions
     .filter((t) => t.type === "income")
@@ -147,6 +187,21 @@ export default function DashboardPage() {
           {formatDateShort(fiscalRange.start)} ~ {formatDateShort(fiscalRange.end)}
         </p>
       )}
+
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
+        <MultiSelectDropdown
+          label="결제수단"
+          options={paymentMethodOptions}
+          selected={paymentMethodFilterIds}
+          onChange={setPaymentMethodFilterIds}
+        />
+        <MultiSelectDropdown
+          label="고정"
+          options={recurringOptions}
+          selected={recurringFilterIds}
+          onChange={setRecurringFilterIds}
+        />
+      </div>
 
       <div
         className={`${cardClass} grid grid-cols-1 divide-y divide-border`}
